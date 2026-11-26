@@ -71,3 +71,25 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-project
       - run: pnpm build
+
+  db:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-project
+
+      - name: Start Supabase
+        run: >-
+          pnpm exec supabase start
+          -x realtime,storage-api,imgproxy,kong,mailpit,postgrest,studio,edge-runtime,logflare,vector,supavisor
+
+      - name: Run database tests
+        run: pnpm db:test
+
+      - name: Run security advisors
+        run: pnpm exec supabase db advisors --type security --level info --fail-on info
+
+      - name: Check generated types are up to date
+        run: |
+          pnpm db:types
+          git diff --exit-code -- src/types/database.ts
