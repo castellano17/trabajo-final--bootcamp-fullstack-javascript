@@ -4,11 +4,11 @@
 
 Fuente: [consigna en Notion](https://iamdoomling.notion.site/Trabajo-Final-Bootcamp-Fullstack-JavaScript-41e63961b3048070b669caade2eb3467)
 
-| | |
-| --- | --- |
-| **Fecha final de entrega** | 08 de enero de 2027 a las 23:59 hrs (MX) |
-| **Método de entrega** | <https://codigofacilito.com/bootcamps/fullstack-javascript-g2/projects/new> |
-| **Dudas o consultas** | Ver contacto en la consigna de Notion |
+|                            |                                                                             |
+| -------------------------- | --------------------------------------------------------------------------- |
+| **Fecha final de entrega** | 08 de enero de 2027 a las 23:59 hrs (MX)                                    |
+| **Método de entrega**      | <https://codigofacilito.com/bootcamps/fullstack-javascript-g2/projects/new> |
+| **Dudas o consultas**      | Ver contacto en la consigna de Notion                                       |
 
 ## Objetivo
 
@@ -39,33 +39,33 @@ La categoría es libre, siempre que el proyecto cumpla de forma orgánica todos 
 
 Es un punto de partida: pueden agregar tablas, pero no quitar relaciones ni restricciones.
 
-| Tabla | Campos clave | Relaciones y restricciones |
-| --- | --- | --- |
-| `profiles` | id, nombre, avatar_url, rol (usuario, moderador, admin) | 1 a 1 con el usuario de Supabase Auth |
-| `places` | id, nombre, categoría, descripción, dirección, promedio, cantidad_reseñas | Promedio y cantidad se actualizan por trigger o función |
-| `reviews` | id, place_id, user_id, puntaje, texto, oculta | Un solo registro por par (place_id, user_id); puntaje entre 1 y 5 |
-| `review_photos` | id, review_id, storage_path | Máximo 3 por reseña |
-| `comments` | id, review_id, user_id, texto | Pertenece a una reseña y a un usuario |
-| `review_votes` | review_id, user_id | Un voto de "útil" por usuario y reseña |
-| `reports` | id, review_id, reportado_por, motivo, estado | Alimenta la cola de moderación |
+| Tabla           | Campos clave                                                              | Relaciones y restricciones                                        |
+| --------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `profiles`      | id, nombre, avatar_url, rol (usuario, moderador, admin)                   | 1 a 1 con el usuario de Supabase Auth                             |
+| `places`        | id, nombre, categoría, descripción, dirección, promedio, cantidad_reseñas | Promedio y cantidad se actualizan por trigger o función           |
+| `reviews`       | id, place_id, user_id, puntaje, texto, oculta                             | Un solo registro por par (place_id, user_id); puntaje entre 1 y 5 |
+| `review_photos` | id, review_id, storage_path                                               | Máximo 3 por reseña                                               |
+| `comments`      | id, review_id, user_id, texto                                             | Pertenece a una reseña y a un usuario                             |
+| `review_votes`  | review_id, user_id                                                        | Un voto de "útil" por usuario y reseña                            |
+| `reports`       | id, review_id, reportado_por, motivo, estado                              | Alimenta la cola de moderación                                    |
 
 ## Requisitos técnicos
 
-| Módulo | Requisito | Cómo se aplica en la plataforma de reseñas |
-| --- | --- | --- |
-| Next.js | App Router con al menos 3 niveles de rutas anidadas | Lugares, detalle de un lugar, detalle de una reseña |
-| React / Next.js | Server Components y al menos un boundary de Suspense con estado de carga real | La página del lugar carga su ficha de inmediato y hace streaming de las reseñas |
-| Next.js | Al menos una Server Action que cree o modifique datos, sin API route aparte | Publicar una reseña, comentar, marcar como útil |
-| TypeScript | Tipado end-to-end sin `any`, con tipos generados desde el esquema de Supabase | Tipos de reviews, places y comments derivados de la base |
-| Supabase Auth | Login funcional con `@supabase/ssr` y manejo de sesión | Registro, login y perfil de usuario |
-| Supabase Auth | Al menos dos roles con permisos distintos | Usuario, moderador y admin con acciones diferentes |
-| Base de datos | Modelo relacional con tablas vinculadas | Ver modelo sugerido |
-| Base de datos | Row Level Security según rol y dueño del registro | Cada usuario edita solo sus reseñas; el moderador oculta cualquiera; las reseñas ocultas no se ven en el listado público |
-| Storage | Carga de archivos con políticas de acceso | Fotos de reseñas y avatares, con límite de tamaño y tipo |
-| Realtime | Una vista que se actualiza en vivo ante cambios de otro usuario | Nuevas reseñas y comentarios en la página del lugar |
-| Edge Functions | Una función que resuelva algo que no corresponde al cliente | Notificar al moderador cuando llega una denuncia |
-| Deployment | Deploy en Vercel con CI/CD que corra lint y build antes de mergear | Pipeline en el repositorio con checks obligatorios |
-| Observabilidad | Implementar un logger mínimo a criterio del estudiante | Indicar en el README qué se decide loggear y por qué |
+| Módulo          | Requisito                                                                     | Cómo se aplica en la plataforma de reseñas                                                                               |
+| --------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Next.js         | App Router con al menos 3 niveles de rutas anidadas                           | Lugares, detalle de un lugar, detalle de una reseña                                                                      |
+| React / Next.js | Server Components y al menos un boundary de Suspense con estado de carga real | La página del lugar carga su ficha de inmediato y hace streaming de las reseñas                                          |
+| Next.js         | Al menos una Server Action que cree o modifique datos, sin API route aparte   | Publicar una reseña, comentar, marcar como útil                                                                          |
+| TypeScript      | Tipado end-to-end sin `any`, con tipos generados desde el esquema de Supabase | Tipos de reviews, places y comments derivados de la base                                                                 |
+| Supabase Auth   | Login funcional con `@supabase/ssr` y manejo de sesión                        | Registro, login y perfil de usuario                                                                                      |
+| Supabase Auth   | Al menos dos roles con permisos distintos                                     | Usuario, moderador y admin con acciones diferentes                                                                       |
+| Base de datos   | Modelo relacional con tablas vinculadas                                       | Ver modelo sugerido                                                                                                      |
+| Base de datos   | Row Level Security según rol y dueño del registro                             | Cada usuario edita solo sus reseñas; el moderador oculta cualquiera; las reseñas ocultas no se ven en el listado público |
+| Storage         | Carga de archivos con políticas de acceso                                     | Fotos de reseñas y avatares, con límite de tamaño y tipo                                                                 |
+| Realtime        | Una vista que se actualiza en vivo ante cambios de otro usuario               | Nuevas reseñas y comentarios en la página del lugar                                                                      |
+| Edge Functions  | Una función que resuelva algo que no corresponde al cliente                   | Notificar al moderador cuando llega una denuncia                                                                         |
+| Deployment      | Deploy en Vercel con CI/CD que corra lint y build antes de mergear            | Pipeline en el repositorio con checks obligatorios                                                                       |
+| Observabilidad  | Implementar un logger mínimo a criterio del estudiante                        | Indicar en el README qué se decide loggear y por qué                                                                     |
 
 ## Entregables
 
