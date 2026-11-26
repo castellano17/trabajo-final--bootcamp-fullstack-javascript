@@ -94,11 +94,11 @@ select tests.authenticate_as('10000000-0000-0000-0000-000000000003');
 
 select lives_ok(
   $$ insert into public.places (name, category, address)
-     values ('Birria Don Pepe', 'birria', 'Calle 2') $$,
+     values ('Birria Creada Por Admin', 'birria', 'Calle 2') $$,
   'an admin can create a place'
 );
 select is(
-  (select created_by from public.places where name = 'Birria Don Pepe'),
+  (select created_by from public.places where name = 'Birria Creada Por Admin'),
   '10000000-0000-0000-0000-000000000003'::uuid,
   'a new place records the admin who created it'
 );
@@ -113,7 +113,7 @@ select lives_ok(
   'an admin can update a place'
 );
 select lives_ok(
-  $$ delete from public.places where name = 'Birria Don Pepe' $$,
+  $$ delete from public.places where name = 'Birria Creada Por Admin' $$,
   'an admin can delete a place'
 );
 

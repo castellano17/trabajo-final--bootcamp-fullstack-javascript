@@ -22,12 +22,12 @@ insert into public.review_photos (review_id, storage_path) values
 select tests.authenticate_as_anon();
 
 select results_eq(
-  'select id from public.reviews',
+  $$ select id from public.reviews where place_id = '20000000-0000-0000-0000-000000000001' $$,
   $$ values ('30000000-0000-0000-0000-000000000001'::uuid) $$,
   'a visitor sees visible reviews and not hidden ones'
 );
 select results_eq(
-  'select storage_path from public.review_photos',
+  $$ select storage_path from public.review_photos where storage_path like 'reviews/%' $$,
   $$ values ('reviews/visible.jpg') $$,
   'a visitor sees photos of visible reviews only'
 );

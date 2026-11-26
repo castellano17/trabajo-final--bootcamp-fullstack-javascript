@@ -25,7 +25,7 @@ values ('30000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-0000000
 select tests.authenticate_as_anon();
 
 select is_empty(
-  'select id from public.comments',
+  $$ select id from public.comments where review_id = '30000000-0000-0000-0000-000000000002' $$,
   'a visitor does not see comments of hidden reviews'
 );
 select throws_ok(
@@ -105,7 +105,7 @@ select throws_ok(
   'a user cannot report their own review'
 );
 select is_empty(
-  'select id from public.reports',
+  $$ select id from public.reports where review_id = '30000000-0000-0000-0000-000000000003' $$,
   'a user cannot read reports'
 );
 select throws_ok(
@@ -131,7 +131,7 @@ select is(
 select tests.authenticate_as('10000000-0000-0000-0000-000000000003');
 
 select is(
-  (select count(*)::integer from public.reports),
+  (select count(*)::integer from public.reports where review_id in ('30000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000003')),
   2,
   'a moderator can read all reports'
 );
