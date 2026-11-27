@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
@@ -7,7 +9,9 @@ export default function HomePage() {
       <p className="max-w-md text-lg text-muted-foreground">
         Descubre las mejores taquerías, califícalas y comparte tus reseñas.
       </p>
-      <Button size="lg">Explorar taquerías</Button>
+      <Button asChild size="lg">
+        <Link href="/lugares">Explorar taquerías</Link>
+      </Button>
     </main>
   );
 }

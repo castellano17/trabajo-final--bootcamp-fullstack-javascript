@@ -71,3 +71,50 @@ insert into public.reviews (place_id, user_id, rating, body) values
    'Sabor correcto, pero la tortilla llegó fría.'),
   ('b0000000-0000-0000-0000-000000000004', 'a0000000-0000-0000-0000-000000000001', 2,
    'Las carnitas estaban secas esta vez.');
+
+insert into public.places (id, name, category, description, address, created_by) values
+  ('b0000000-0000-0000-0000-000000000006', 'Barbacoa Los Compadres', 'barbacoa',
+   'Barbacoa de borrego en hoyo, solo los fines de semana.', 'Carretera México-Pachuca km 32, Tizayuca',
+   'a0000000-0000-0000-0000-000000000003'),
+  ('b0000000-0000-0000-0000-000000000007', 'Tacos de Canasta Doña Lupe', 'canasta',
+   'Tacos sudados de chicharrón, papa y frijol.', 'Salida del metro Hidalgo, Ciudad de México',
+   'a0000000-0000-0000-0000-000000000003'),
+  ('b0000000-0000-0000-0000-000000000008', 'Guisados La Abuela', 'guisado',
+   'Más de veinte guisados caseros cada día.', 'Calle Durango 87, Ciudad de México',
+   'a0000000-0000-0000-0000-000000000003'),
+  ('b0000000-0000-0000-0000-000000000009', 'El Trompo de Oro', 'pastor',
+   'Pastor con piña y salsas de molcajete.', 'Av. Vallarta 1520, Guadalajara',
+   'a0000000-0000-0000-0000-000000000003'),
+  ('b0000000-0000-0000-0000-000000000010', 'Birriería La Tapatía', 'birria',
+   'Birria de chivo estilo Jalisco.', 'Av. Chapultepec 300, Guadalajara',
+   'a0000000-0000-0000-0000-000000000003'),
+  ('b0000000-0000-0000-0000-000000000011', 'Suadero El Primo', 'suadero',
+   'Suadero y tripa dorada hasta la madrugada.', 'Calzada de Tlalpan 1500, Ciudad de México',
+   'a0000000-0000-0000-0000-000000000003'),
+  ('b0000000-0000-0000-0000-000000000012', 'Mariscos La Güera', 'mariscos',
+   'Tacos gobernador y de marlin.', 'Av. Juárez 45, Mazatlán',
+   'a0000000-0000-0000-0000-000000000003'),
+  ('b0000000-0000-0000-0000-000000000013', 'Taquería Los Cocuyos', 'other',
+   'Cabeza, lengua y longaniza desde hace cincuenta años.', 'Bolívar 56, Ciudad de México',
+   'a0000000-0000-0000-0000-000000000003'),
+  ('b0000000-0000-0000-0000-000000000014', 'Canastas El Güerito', 'canasta',
+   'Canasta de adobo y de mole verde.', 'Av. Universidad 900, Ciudad de México',
+   'a0000000-0000-0000-0000-000000000003'),
+  ('b0000000-0000-0000-0000-000000000015', 'Tacos Árabes Puebla', 'other',
+   'Tacos árabes en pan pita con chipotle.', 'Calle 5 de Mayo 210, Puebla',
+   'a0000000-0000-0000-0000-000000000003');
+
+insert into public.reviews (place_id, user_id, rating, body) values
+  ('b0000000-0000-0000-0000-000000000009', 'a0000000-0000-0000-0000-000000000001', 5,
+   'El pastor más jugoso de Guadalajara.'),
+  ('b0000000-0000-0000-0000-000000000009', 'a0000000-0000-0000-0000-000000000002', 4,
+   'Buenas salsas, el lugar se llena rápido.'),
+  ('b0000000-0000-0000-0000-000000000010', 'a0000000-0000-0000-0000-000000000003', 4,
+   'Consomé potente y tortillas recién hechas.'),
+  ('b0000000-0000-0000-0000-000000000013', 'a0000000-0000-0000-0000-000000000001', 5,
+   'Los tacos de cabeza son una tradición que vale la fila.');
+
+update public.reviews
+set is_hidden = true
+where place_id = 'b0000000-0000-0000-0000-000000000004'
+  and user_id = 'a0000000-0000-0000-0000-000000000001';
