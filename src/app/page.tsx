@@ -43,7 +43,7 @@ export default async function HomePage() {
       {topRatedPlaces.length > 0 && (
         <section
           aria-labelledby="top-rated-heading"
-          className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-14"
+          className="mx-auto grid w-full max-w-6xl gap-6 px-4 pt-14"
         >
           <div className="flex flex-wrap items-end justify-between gap-4">
             <h2
@@ -71,7 +71,7 @@ export default async function HomePage() {
 
       <section
         aria-labelledby="categories-heading"
-        className="mx-auto grid w-full max-w-6xl gap-6 px-4 pb-16"
+        className="mx-auto grid w-full max-w-6xl gap-6 px-4 pt-14 pb-16"
       >
         <h2
           id="categories-heading"
