@@ -13,3 +13,7 @@ export const googleMapsUrlPrefixes = [
 ] as const;
 
 export const mapsUrlMaxLength = 500;
+
+export const placeQrSizeInPixels = 512;
+
+export const placeQrMarginInModules = 4;

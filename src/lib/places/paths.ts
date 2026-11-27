@@ -29,3 +29,7 @@ export function googleMapsUrl({
   searchUrl.searchParams.set("query", address);
   return searchUrl.toString();
 }
+
+export function placeUrl(siteOrigin: string, slug: string): string {
+  return new URL(placePath(slug), siteOrigin).toString();
+}

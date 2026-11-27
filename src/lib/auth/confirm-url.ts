@@ -1,9 +1,5 @@
-import { headers } from "next/headers";
+import { currentRequestOrigin } from "@/lib/site-origin";
 
 export async function getConfirmUrl(): Promise<string> {
-  const requestHeaders = await headers();
-  const origin =
-    requestHeaders.get("origin") ??
-    `${requestHeaders.get("x-forwarded-proto") ?? "http"}://${requestHeaders.get("host")}`;
-  return `${origin}/auth/confirm`;
+  return `${await currentRequestOrigin()}/auth/confirm`;
 }

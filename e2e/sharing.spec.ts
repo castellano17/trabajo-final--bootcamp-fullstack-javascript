@@ -128,3 +128,160 @@ test.describe("Google Maps link", () => {
     await expect(page).toHaveURL("/lugares");
   });
 });
+
+test.describe("place QR", () => {
+  test("the QR of a place is a PNG image and a place that does not exist has no QR", async ({
+    request,
+  }) => {
+    const response = await request.get(`${tacosElGueroPath}/qr`);
+
+    expect(response.status()).toBe(200);
+    expect(response.headers()["content-type"]).toBe("image/png");
+    expect((await response.body()).subarray(0, 4)).toEqual(
+      Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+    );
+    expect((await request.get("/lugares/no-existe/qr")).status()).toBe(404);
+  });
+});
+
+test.describe("share dialog", () => {
+  const shareDialogName = "Compartir Tacos El Güero";
+  const shortUrl = "http://localhost:3100/lugares/tacos-el-guero";
+
+  async function openShareDialog(page: Page) {
+    await page.goto(tacosElGueroPath);
+    await page.getByRole("button", { name: "Compartir" }).click();
+    const dialog = page.getByRole("dialog", { name: shareDialogName });
+    const qrImage = dialog.getByRole("img", {
+      name: "Código QR de Tacos El Güero",
+    });
+    await expect
+      .poll(() =>
+        qrImage.evaluate((image: HTMLImageElement) => image.naturalWidth),
+      )
+      .toBeGreaterThan(0);
+    return dialog;
+  }
+
+  test("a visitor without a session sees Compartir, and the dialog shows the QR, the name and the short URL", async ({
+    page,
+  }) => {
+    const dialog = await openShareDialog(page);
+
+    await expect(dialog).toContainText(shortUrl);
+  });
+
+  test("Descargar QR downloads a PNG named qr-<slug>.png", async ({ page }) => {
+    const dialog = await openShareDialog(page);
+
+    const downloadEvent = page.waitForEvent("download");
+    await dialog.getByRole("link", { name: "Descargar QR" }).click();
+
+    expect((await downloadEvent).suggestedFilename()).toBe(
+      "qr-tacos-el-guero.png",
+    );
+  });
+
+  test("Copiar enlace copies the short URL and says it was copied", async ({
+    page,
+    context,
+  }) => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    const dialog = await openShareDialog(page);
+
+    await dialog.getByRole("button", { name: "Copiar enlace" }).click();
+
+    await expect(dialog.getByRole("status")).toHaveText("Enlace copiado.");
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+      shortUrl,
+    );
+  });
+
+  test("Compartir sends the QR image and the link to the system share menu", async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      const sharedItems: { text?: string; fileNames: string[] }[] = [];
+      Object.assign(window, { sharedItems });
+      Object.defineProperty(navigator, "canShare", {
+        configurable: true,
+        value: () => true,
+      });
+      Object.defineProperty(navigator, "share", {
+        configurable: true,
+        value: async (data: ShareData) => {
+          sharedItems.push({
+            text: data.text,
+            fileNames: (data.files ?? []).map((file) => file.name),
+          });
+        },
+      });
+    });
+    const dialog = await openShareDialog(page);
+
+    await dialog.getByRole("button", { name: "Compartir" }).click();
+
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            (
+              window as unknown as {
+                sharedItems: { text?: string; fileNames: string[] }[];
+              }
+            ).sharedItems,
+        ),
+      )
+      .toEqual([
+        {
+          text: `Tacos El Güero en ReseñIt: ${shortUrl}`,
+          fileNames: ["qr-tacos-el-guero.png"],
+        },
+      ]);
+  });
+
+  test("in a browser that cannot share, the dialog has no Compartir button", async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "share", {
+        configurable: true,
+        value: undefined,
+      });
+    });
+    const dialog = await openShareDialog(page);
+
+    await expect(dialog.getByRole("button", { name: "Compartir" })).toHaveCount(
+      0,
+    );
+    await expect(
+      dialog.getByRole("button", { name: "Copiar enlace" }),
+    ).toBeVisible();
+  });
+});
+
+test.describe("link previews", () => {
+  test("the place page declares the Open Graph title, description and URL with the slug", async ({
+    page,
+  }) => {
+    const placeUrl = "http://localhost:3100/lugares/tacos-el-guero";
+
+    await page.goto(tacosElGueroPath);
+
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+      "content",
+      "Tacos El Güero",
+    );
+    await expect(
+      page.locator('meta[property="og:description"]'),
+    ).toHaveAttribute("content", "Tacos al pastor con piña asada al trompo.");
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
+      "content",
+      placeUrl,
+    );
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+      "href",
+      placeUrl,
+    );
+  });
+});

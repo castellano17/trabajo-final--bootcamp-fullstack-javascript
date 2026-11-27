@@ -6,6 +6,7 @@ import {
   placePath,
   placeQrPath,
   placeReviewPath,
+  placeUrl,
 } from "@/lib/places/paths";
 
 describe("place paths", () => {
@@ -18,6 +19,17 @@ describe("place paths", () => {
       "/lugares/tacos-el-guero/resena",
     );
     expect(placeQrPath("tacos-el-guero")).toBe("/lugares/tacos-el-guero/qr");
+  });
+
+  it("the shared URL and the QR point to /lugares/<slug> on the site origin", () => {
+    expect(
+      placeUrl(
+        "https://trabajo-final-bootcamp-fullstack-ja.vercel.app",
+        "tacos-el-guero",
+      ),
+    ).toBe(
+      "https://trabajo-final-bootcamp-fullstack-ja.vercel.app/lugares/tacos-el-guero",
+    );
   });
 });
 

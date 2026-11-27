@@ -173,19 +173,20 @@ test.describe("place page", () => {
 
 test.describe("rating summary and security", () => {
   async function ratingRows(page: Page) {
-    return page
+    const rows = page
       .getByRole("list", { name: "Calificaciones por puntaje" })
-      .getByRole("listitem")
-      .evaluateAll((rows) =>
-        rows.map((row) => {
-          const bar = row.querySelector('[role="progressbar"]');
-          return {
-            label: bar?.getAttribute("aria-label"),
-            percentage: bar?.getAttribute("aria-valuenow"),
-            count: row.lastElementChild?.textContent,
-          };
-        }),
-      );
+      .getByRole("listitem");
+    await expect(rows).toHaveCount(5);
+    return rows.evaluateAll((rowElements) =>
+      rowElements.map((row) => {
+        const bar = row.querySelector('[role="progressbar"]');
+        return {
+          label: bar?.getAttribute("aria-label"),
+          percentage: bar?.getAttribute("aria-valuenow"),
+          count: row.lastElementChild?.textContent,
+        };
+      }),
+    );
   }
 
   test("the rating summary counts the visible reviews of each score", async ({

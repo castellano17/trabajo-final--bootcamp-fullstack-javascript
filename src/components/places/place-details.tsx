@@ -9,10 +9,15 @@ import type { PlaceDetail } from "@/lib/places/queries";
 
 type PlaceDetailsProps = {
   place: PlaceDetail;
+  shareAction: ReactNode;
   adminActions?: ReactNode;
 };
 
-export function PlaceDetails({ place, adminActions }: PlaceDetailsProps) {
+export function PlaceDetails({
+  place,
+  shareAction,
+  adminActions,
+}: PlaceDetailsProps) {
   const {
     icon: CategoryIcon,
     tileClassName,
@@ -40,7 +45,10 @@ export function PlaceDetails({ place, adminActions }: PlaceDetailsProps) {
             </h1>
           </div>
         </div>
-        {adminActions}
+        <div className="flex flex-wrap gap-2">
+          {shareAction}
+          {adminActions}
+        </div>
       </div>
       <a
         href={googleMapsUrl({
