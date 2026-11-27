@@ -79,9 +79,27 @@ Vercel (proyecto → **Settings → Environment Variables**): crear las tres var
   - Cada subida usa un nombre de archivo nuevo y borra el anterior, así que ninguna caché muestra una foto vieja y no se acumulan archivos.
 - El bucket y sus políticas los crea la migración `create_avatars_bucket`. En producción los aplica `deploy-db`; no hay que configurar nada en el panel de Supabase.
 
+## Lugares
+
+- `/lugares` lista las taquerías de 12 en 12, ordenadas por mejor promedio, luego por más reseñas y luego por nombre. Se pueden filtrar por categoría y buscar por nombre; los filtros viven en la URL (`?categoria=birria&q=don&pagina=2`), así que un enlace filtrado se puede compartir y funciona sin JavaScript.
+- `/lugares/<id>` muestra la ficha del lugar de inmediato, y las reseñas visibles llegan después con `Suspense` mientras se ve un esqueleto de carga. Las reseñas ocultas por moderación no aparecen para nadie en esta página.
+
+| Acción                                 | Visitante | Usuario | Moderador | Admin |
+| -------------------------------------- | --------- | ------- | --------- | ----- |
+| Ver el listado y la página de un lugar | Sí        | Sí      | Sí        | Sí    |
+| Crear, editar y borrar lugares         | No        | No      | No        | Sí    |
+
+Cómo se protege la gestión:
+
+- Los botones "Nuevo lugar", "Editar" y "Borrar" solo se muestran al admin, y los formularios de `/lugares/nuevo` y `/lugares/<id>/editar` responden 404 a cualquier otra sesión.
+- Las Server Actions comprueban que quien llama sea admin antes de tocar la base, y las políticas de RLS de `places` vuelven a exigirlo en cada escritura.
+- Borrar un lugar borra también sus reseñas. El diálogo de confirmación dice cuántas se van a borrar, incluidas las ocultas.
+
+En producción no hay lugares al principio: el admin los crea desde `/lugares/nuevo` (ver "Primer administrador en producción"). En local, el seed trae 15 taquerías y una reseña oculta.
+
 ## Logs
 
-La app escribe una línea JSON por evento de autenticación y de perfil en la salida estándar, que Vercel muestra en **Logs**. Cada línea tiene `level`, `event`, `timestamp` y contexto como `userId` o `reason`:
+La app escribe una línea JSON por evento de autenticación, de perfil y de gestión de lugares en la salida estándar, que Vercel muestra en **Logs**. Cada línea tiene `level`, `event`, `timestamp` y contexto como `userId` o `reason`:
 
 ```json
 {
@@ -104,6 +122,8 @@ La app escribe una línea JSON por evento de autenticación y de perfil en la sa
 | `profile.display_name.updated`, `profile.avatar.updated`, `profile.avatar.removed`     | info        | Auditar los cambios de perfil                                                                         |
 | `profile.avatar.rejected`                                                              | warn        | Detectar archivos que no son imágenes (`unsupported_type`) o demasiado grandes (`too_large`)          |
 | `profile.update.failed`                                                                | warn        | Detectar fallos al guardar en la base o en Storage, incluido un avatar anterior que no se pudo borrar |
+| `place.created`, `place.updated`, `place.deleted`                                      | info        | Auditar qué admin cambió el catálogo de lugares y cuándo                                              |
+| `place.save_failed`                                                                    | warn        | Detectar fallos al guardar o borrar un lugar                                                          |
 
 Qué no se registra y por qué: correos, contraseñas, tokens, cookies ni nombres de archivo. El logger descarta cualquier campo cuyo nombre contenga `email`, `password`, `token`, `secret` o `cookie`, aunque se le pase por error. Así los logs sirven para investigar incidentes sin convertirse en una fuga de datos personales.
 
