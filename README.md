@@ -36,6 +36,7 @@ Completa `.env.local` con los valores de la tabla siguiente y abre <http://local
 
 - Registro con email y contraseña (mínimo 8 caracteres, con mayúsculas, minúsculas y números) y confirmación por correo.
 - Inicio y cierre de sesión, reenvío de la confirmación y recuperación de contraseña.
+- Los campos de contraseña tienen un botón para mostrarla u ocultarla.
 - La sesión se valida en el servidor con `getClaims()`. Los mensajes nunca revelan si un correo está registrado.
 - Todos los formularios llevan Cloudflare Turnstile, que Supabase Auth valida en el servidor.
 - Cabeceras de seguridad: Content Security Policy con `nonce` por petición, HSTS, `X-Content-Type-Options`, `Referrer-Policy` y `Permissions-Policy`.
@@ -69,7 +70,7 @@ Vercel (proyecto → **Settings → Environment Variables**): crear las tres var
 ## Perfil y avatares
 
 - En `/perfil` cada usuario cambia su nombre (de 1 a 50 caracteres) y su foto. La cabecera muestra la foto, o las iniciales si no hay foto.
-- El navegador recorta la foto al centro en un cuadrado de 512×512 y la convierte a WebP antes de subirla, así que una foto de celular queda en unos 50 KB.
+- La foto se cambia desde un modal: se arrastra la imagen o se elige con un clic, y en el celular también se puede tomar con la cámara. Después se encuadra moviéndola y con un zoom de 1× a 3×. El navegador recorta esa área a 512×512 en WebP antes de subirla, así que una foto de celular queda en unos 50 KB.
 - Se aceptan JPEG, PNG y WebP de hasta 2 MB.
 - Cómo se protegen los archivos:
   - El servidor revisa el tipo real del archivo por sus primeros bytes, no por la extensión ni por el tipo que declara el navegador.

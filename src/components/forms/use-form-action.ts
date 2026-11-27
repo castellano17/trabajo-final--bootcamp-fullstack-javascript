@@ -21,14 +21,24 @@ export function useFormAction(action: FormAction) {
   );
   const [submissionCount, setSubmissionCount] = useState(0);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+  function submitFormData(formData: FormData) {
     setSubmissionCount((count) => count + 1);
     startTransition(() => formAction(formData));
   }
 
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    submitFormData(new FormData(event.currentTarget));
+  }
+
   const fieldErrors = state.status === "error" ? (state.fieldErrors ?? {}) : {};
 
-  return { state, fieldErrors, handleSubmit, isPending, submissionCount };
+  return {
+    state,
+    fieldErrors,
+    handleSubmit,
+    submitFormData,
+    isPending,
+    submissionCount,
+  };
 }

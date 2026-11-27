@@ -120,6 +120,24 @@ test.describe("sign in and sign out", () => {
     });
   }
 
+  test("the eye button shows and hides the password without submitting the form", async ({
+    page,
+  }) => {
+    await page.goto("/iniciar-sesion");
+    const passwordInput = page.getByLabel("Contraseña");
+    await passwordInput.fill("Secreta123");
+    await expect(passwordInput).toHaveAttribute("type", "password");
+
+    await page.getByRole("button", { name: "Mostrar contraseña" }).click();
+    await expect(passwordInput).toHaveAttribute("type", "text");
+    await expect(passwordInput).toHaveValue("Secreta123");
+
+    await page.getByRole("button", { name: "Ocultar contraseña" }).click();
+    await expect(passwordInput).toHaveAttribute("type", "password");
+    await expect(page).toHaveURL("/iniciar-sesion");
+    await expect(pageAlert(page)).toHaveCount(0);
+  });
+
   test("signing out shows the sign-in links and the session does not come back on reload", async ({
     page,
     request,
