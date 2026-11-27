@@ -1,3 +1,5 @@
+import type { Area } from "react-easy-crop";
+
 import { avatarDimensionInPixels } from "@/lib/profile/avatar-config";
 
 function canvasToBlob(
@@ -8,13 +10,20 @@ function canvasToBlob(
   return new Promise((resolve) => canvas.toBlob(resolve, type, quality));
 }
 
-export async function resizeToSquareAvatar(file: File): Promise<File> {
-  const bitmap = await createImageBitmap(file, {
-    imageOrientation: "from-image",
-  });
-  const side = Math.min(bitmap.width, bitmap.height);
-  const sourceX = (bitmap.width - side) / 2;
-  const sourceY = (bitmap.height - side) / 2;
+export async function cropAvatar(file: File, area: Area): Promise<File> {
+  const bitmap = await createImageBitmap(
+    file,
+    Math.round(area.x),
+    Math.round(area.y),
+    Math.max(1, Math.round(area.width)),
+    Math.max(1, Math.round(area.height)),
+    {
+      imageOrientation: "from-image",
+      resizeWidth: avatarDimensionInPixels,
+      resizeHeight: avatarDimensionInPixels,
+      resizeQuality: "high",
+    },
+  );
 
   const canvas = document.createElement("canvas");
   canvas.width = avatarDimensionInPixels;
@@ -26,10 +35,6 @@ export async function resizeToSquareAvatar(file: File): Promise<File> {
   }
   context.drawImage(
     bitmap,
-    sourceX,
-    sourceY,
-    side,
-    side,
     0,
     0,
     avatarDimensionInPixels,
