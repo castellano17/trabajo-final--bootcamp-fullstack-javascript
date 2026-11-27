@@ -8,9 +8,12 @@ import {
   PlaceReviews,
   PlaceReviewsSkeleton,
 } from "@/components/places/place-reviews";
+import { HiddenReviewNotice } from "@/components/reviews/hidden-review-notice";
+import { PlaceReviewActions } from "@/components/reviews/place-review-actions";
 import { getCurrentUser, isAdmin } from "@/lib/auth/session";
 import { getPlace } from "@/lib/places/queries";
 import { placeIdSchema } from "@/lib/places/schemas";
+import { getOwnReview } from "@/lib/reviews/queries";
 
 async function findPlaceOrNull(id: string) {
   return placeIdSchema.safeParse(id).success ? getPlace(id) : null;
@@ -31,6 +34,7 @@ export default async function PlacePage({
     notFound();
   }
   const currentUser = await getCurrentUser();
+  const ownReview = currentUser ? await getOwnReview(place.id) : null;
 
   return (
     <main className="mx-auto grid w-full max-w-6xl flex-1 content-start gap-10 px-4 py-10">
@@ -41,12 +45,16 @@ export default async function PlacePage({
         }
       />
       <section aria-labelledby="place-reviews-heading" className="grid gap-4">
-        <h2
-          id="place-reviews-heading"
-          className="font-heading text-2xl font-bold"
-        >
-          Reseñas
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2
+            id="place-reviews-heading"
+            className="font-heading text-2xl font-bold"
+          >
+            Reseñas
+          </h2>
+          <PlaceReviewActions placeId={place.id} ownReview={ownReview} />
+        </div>
+        {ownReview?.isHidden && <HiddenReviewNotice />}
         <Suspense fallback={<PlaceReviewsSkeleton />}>
           <PlaceReviews
             placeId={place.id}

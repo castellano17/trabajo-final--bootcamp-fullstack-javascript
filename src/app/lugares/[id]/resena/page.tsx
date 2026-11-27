@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import { saveReview } from "@/app/lugares/[id]/resena/actions";
+import { HiddenReviewNotice } from "@/components/reviews/hidden-review-notice";
 import { ReviewForm } from "@/components/reviews/review-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -37,15 +38,7 @@ export default async function ReviewPage({
         </h1>
         <p className="text-muted-foreground">{place.name}</p>
       </div>
-      {ownReview?.isHidden && (
-        <p
-          role="status"
-          className="rounded-lg bg-secondary px-3 py-2 text-sm text-secondary-foreground"
-        >
-          Un moderador ocultó tu reseña. Puedes editarla o borrarla, pero
-          seguirá oculta.
-        </p>
-      )}
+      {ownReview?.isHidden && <HiddenReviewNotice />}
       <Card>
         <CardContent>
           <ReviewForm

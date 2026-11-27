@@ -1,20 +1,7 @@
 "use client";
 
 import { deletePlace } from "@/app/lugares/actions";
-import { FormStatusMessage } from "@/components/forms/form-status-message";
-import { SubmitButton } from "@/components/forms/submit-button";
-import { useFormAction } from "@/components/forms/use-form-action";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { DeleteConfirmDialog } from "@/components/forms/delete-confirm-dialog";
 import { formatReviewCount } from "@/lib/places/format";
 
 type DeletePlaceDialogProps = {
@@ -28,38 +15,12 @@ export function DeletePlaceDialog({
   placeName,
   reviewCount,
 }: DeletePlaceDialogProps) {
-  const { state, handleSubmit, isPending } = useFormAction(
-    deletePlace.bind(null, placeId),
-  );
-
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive">Borrar</Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>¿Borrar {placeName}?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Se borrarán el lugar y {formatReviewCount(reviewCount)}. No se puede
-            deshacer.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <FormStatusMessage state={state} />
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
-          <form onSubmit={handleSubmit} className="max-sm:w-full">
-            <SubmitButton
-              variant="destructive"
-              className="w-full"
-              isPending={isPending}
-              pendingLabel="Borrando…"
-            >
-              Borrar lugar
-            </SubmitButton>
-          </form>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <DeleteConfirmDialog
+      action={deletePlace.bind(null, placeId)}
+      title={`¿Borrar ${placeName}?`}
+      description={`Se borrarán el lugar y ${formatReviewCount(reviewCount)}. No se puede deshacer.`}
+      confirmLabel="Borrar lugar"
+    />
   );
 }

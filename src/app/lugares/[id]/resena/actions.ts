@@ -314,3 +314,60 @@ export async function saveReview(
 
   refreshReviewViews(placeId);
 }
+
+const deleteFailedState: FormState = {
+  status: "error",
+  message: "No pudimos borrar tu reseña. Inténtalo de nuevo.",
+};
+
+export async function deleteReview(placeId: string): Promise<FormState> {
+  if (!placeIdSchema.safeParse(placeId).success) {
+    return deleteFailedState;
+  }
+  const { supabase, userId } = await getSignedInUser(placeId);
+
+  const { data: review, error: readError } = await supabase
+    .from("reviews")
+    .select("id, photos:review_photos(storage_path)")
+    .eq("place_id", placeId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (readError || !review) {
+    logger.warn("review.delete_failed", {
+      userId,
+      placeId,
+      reason: readError?.code ?? "not_found",
+    });
+    return deleteFailedState;
+  }
+
+  const { error } = await supabase
+    .from("reviews")
+    .delete()
+    .eq("id", review.id)
+    .select("id")
+    .single();
+  if (error) {
+    logger.warn("review.delete_failed", {
+      userId,
+      reviewId: review.id,
+      reason: error.code,
+    });
+    return deleteFailedState;
+  }
+
+  const removalError = await removeReviewPhotoFiles(
+    supabase.storage.from(reviewPhotoBucket),
+    review.photos.map((photo) => photo.storage_path),
+  );
+  if (removalError) {
+    logger.warn("review.delete_failed", {
+      userId,
+      reviewId: review.id,
+      reason: "photo_delete_failed",
+    });
+  }
+
+  logger.info("review.deleted", { userId, placeId, reviewId: review.id });
+  refreshReviewViews(placeId);
+}

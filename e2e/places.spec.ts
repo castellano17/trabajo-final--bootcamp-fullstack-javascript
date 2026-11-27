@@ -24,7 +24,7 @@ async function placeNames(page: Page) {
 function placeManagementControls(page: Page) {
   return page
     .getByRole("link", { name: /^(Nuevo lugar|Editar)$/ })
-    .or(page.getByRole("button", { name: "Borrar" }));
+    .or(page.getByRole("button", { name: "Borrar", exact: true }));
 }
 
 function uniquePlaceName() {
