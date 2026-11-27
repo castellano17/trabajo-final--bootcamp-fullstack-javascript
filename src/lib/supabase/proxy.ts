@@ -4,6 +4,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import { supabasePublishableKey, supabaseUrl } from "@/lib/supabase/config";
 import type { Database } from "@/types/database";
 
+const signedInOnlyPaths = ["/actualizar-contrasena"];
+
+function redirectToSignIn(request: NextRequest): NextResponse {
+  const signInUrl = new URL("/iniciar-sesion", request.url);
+  signInUrl.searchParams.set("next", request.nextUrl.pathname);
+  return NextResponse.redirect(signInUrl);
+}
+
 export async function refreshSession(
   request: NextRequest,
 ): Promise<NextResponse> {
@@ -33,7 +41,11 @@ export async function refreshSession(
     },
   );
 
-  await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
+
+  if (!data && signedInOnlyPaths.includes(request.nextUrl.pathname)) {
+    return redirectToSignIn(request);
+  }
 
   return response;
 }
