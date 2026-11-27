@@ -61,8 +61,10 @@ export type Database = {
           created_by: string | null;
           description: string;
           id: string;
+          maps_url: string | null;
           name: string;
           review_count: number;
+          slug: string;
           updated_at: string;
         };
         ComputedFields: never;
@@ -74,8 +76,10 @@ export type Database = {
           created_by?: string | null;
           description?: string;
           id?: string;
+          maps_url?: string | null;
           name: string;
           review_count?: number;
+          slug?: string;
           updated_at?: string;
         };
         Update: {
@@ -86,8 +90,10 @@ export type Database = {
           created_by?: string | null;
           description?: string;
           id?: string;
+          maps_url?: string | null;
           name?: string;
           review_count?: number;
+          slug?: string;
           updated_at?: string;
         };
         Relationships: [
