@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { placesPerPage } from "@/lib/places/config";
 import type { PlaceFilters } from "@/lib/places/schemas";
 import { escapeLikePattern } from "@/lib/places/search-pattern";
@@ -40,7 +42,7 @@ export type PlaceSummary = Awaited<
   ReturnType<typeof listPlaces>
 >["places"][number];
 
-export async function getPlace(placeId: string) {
+export const getPlace = cache(async (placeId: string) => {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("places")
@@ -53,7 +55,7 @@ export async function getPlace(placeId: string) {
     throw new Error(`Could not load place: ${error.code}`);
   }
   return data;
-}
+});
 
 export type PlaceDetail = NonNullable<Awaited<ReturnType<typeof getPlace>>>;
 
@@ -62,7 +64,7 @@ export async function listPlaceReviews(placeId: string) {
   const { data, error } = await supabase
     .from("reviews")
     .select(
-      "id, rating, body, created_at, author:profiles(display_name, avatar_url)",
+      "id, rating, body, created_at, author:profiles!reviews_user_id_fkey(display_name, avatar_url)",
     )
     .eq("place_id", placeId)
     .eq("is_hidden", false)
