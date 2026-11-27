@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { supabasePublishableKey, supabaseUrl } from "@/lib/supabase/config";
 import type { Database } from "@/types/database";
 
-const signedInOnlyPaths = ["/actualizar-contrasena"];
+const signedInOnlyPaths = ["/actualizar-contrasena", "/perfil"];
 
 function redirectToSignIn(request: NextRequest): NextResponse {
   const signInUrl = new URL("/iniciar-sesion", request.url);

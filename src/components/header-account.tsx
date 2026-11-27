@@ -3,6 +3,7 @@ import Link from "next/link";
 import { signOut } from "@/app/(auth)/actions";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Button } from "@/components/ui/button";
+import { UserAvatar } from "@/components/user-avatar";
 import { getCurrentUser } from "@/lib/auth/session";
 
 export async function HeaderAccount() {
@@ -23,9 +24,17 @@ export async function HeaderAccount() {
 
   return (
     <>
-      <span className="max-w-40 truncate text-sm font-medium">
-        {currentUser.displayName}
-      </span>
+      <Link
+        href="/perfil"
+        className="flex items-center gap-2 rounded-lg px-1 py-0.5 text-sm font-medium hover:bg-muted"
+      >
+        <UserAvatar
+          displayName={currentUser.displayName}
+          avatarUrl={currentUser.avatarUrl}
+          size="sm"
+        />
+        <span className="max-w-40 truncate">{currentUser.displayName}</span>
+      </Link>
       <form action={signOut}>
         <SignOutButton />
       </form>
