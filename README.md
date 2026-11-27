@@ -62,7 +62,7 @@ Supabase (<https://supabase.com/dashboard>, proyecto de producción):
 7. **Project Settings → JWT Keys**: comprobar que la clave en uso es asimétrica (ECC o RSA), para que `getClaims()` valide el token sin llamar al servidor de Auth.
 8. **Project Settings → API Keys**: copiar la clave `sb_publishable_…`.
 
-Cloudflare (<https://dash.cloudflare.com> → Turnstile): crear un widget _Managed_ con el dominio `trabajo-final-bootcamp-fullstack-ja.vercel.app`. Para que funcione también en las previews, agrega `vercel.app`.
+Cloudflare (<https://dash.cloudflare.com> → Turnstile): crear un widget _Managed_ con el dominio `trabajo-final-bootcamp-fullstack-ja.vercel.app`. Turnstile no acepta comodines, así que para probar una preview hay que agregar en _Hostname Management_ el dominio de su rama, el que Vercel publica en el PR y que se mantiene en cada push (por ejemplo `trabajo-final-bootcamp-fullst-git-fd4654-castellano17s-projects.vercel.app`). El plan gratuito admite 10 dominios por widget. Si falta el dominio, el widget muestra el error `110200`.
 
 Vercel (proyecto → **Settings → Environment Variables**): crear las tres variables `NEXT_PUBLIC_*` para _Production_ y _Preview_ y volver a desplegar.
 
