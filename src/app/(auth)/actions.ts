@@ -5,12 +5,7 @@ import { redirect } from "next/navigation";
 import { captchaFieldName } from "@/lib/auth/captcha";
 import { getConfirmUrl } from "@/lib/auth/confirm-url";
 import { authErrorMessage, isUserFacingAuthError } from "@/lib/auth/errors";
-import {
-  type AuthFormState,
-  checkInboxMessage,
-  readFormField,
-  validationErrorState,
-} from "@/lib/auth/form-state";
+import { checkInboxMessage } from "@/lib/auth/messages";
 import { getSafeRedirectPath } from "@/lib/auth/safe-redirect";
 import {
   passwordResetRequestSchema,
@@ -19,14 +14,19 @@ import {
   signInSchema,
   signUpSchema,
 } from "@/lib/auth/schemas";
+import {
+  type FormState,
+  readFormField,
+  validationErrorState,
+} from "@/lib/forms/form-state";
 import { logger } from "@/lib/logger";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseStatelessClient } from "@/lib/supabase/stateless";
 
 export async function signUp(
-  _previousState: AuthFormState,
+  _previousState: FormState,
   formData: FormData,
-): Promise<AuthFormState> {
+): Promise<FormState> {
   const parsed = signUpSchema.safeParse({
     displayName: readFormField(formData, "displayName"),
     email: readFormField(formData, "email"),
@@ -58,9 +58,9 @@ export async function signUp(
 }
 
 export async function signIn(
-  _previousState: AuthFormState,
+  _previousState: FormState,
   formData: FormData,
-): Promise<AuthFormState> {
+): Promise<FormState> {
   const parsed = signInSchema.safeParse({
     email: readFormField(formData, "email"),
     password: readFormField(formData, "password"),
@@ -86,7 +86,7 @@ export async function signIn(
   redirect(getSafeRedirectPath(readFormField(formData, "next")));
 }
 
-function signInErrorState(errorCode: string | undefined): AuthFormState {
+function signInErrorState(errorCode: string | undefined): FormState {
   if (errorCode === "email_not_confirmed") {
     return {
       status: "error",
@@ -109,9 +109,9 @@ export async function signOut(): Promise<void> {
 }
 
 export async function resendConfirmation(
-  _previousState: AuthFormState,
+  _previousState: FormState,
   formData: FormData,
-): Promise<AuthFormState> {
+): Promise<FormState> {
   const parsed = resendConfirmationSchema.safeParse({
     email: readFormField(formData, "email"),
     captchaToken: readFormField(formData, captchaFieldName),
@@ -140,9 +140,9 @@ export async function resendConfirmation(
 }
 
 export async function requestPasswordReset(
-  _previousState: AuthFormState,
+  _previousState: FormState,
   formData: FormData,
-): Promise<AuthFormState> {
+): Promise<FormState> {
   const parsed = passwordResetRequestSchema.safeParse({
     email: readFormField(formData, "email"),
     captchaToken: readFormField(formData, captchaFieldName),
@@ -170,9 +170,9 @@ export async function requestPasswordReset(
 }
 
 export async function updatePassword(
-  _previousState: AuthFormState,
+  _previousState: FormState,
   formData: FormData,
-): Promise<AuthFormState> {
+): Promise<FormState> {
   const supabase = await createSupabaseServerClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   const userId = claimsData?.claims.sub;

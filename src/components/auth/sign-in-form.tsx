@@ -3,17 +3,17 @@
 import { useState } from "react";
 
 import { signIn } from "@/app/(auth)/actions";
-import { FormField } from "@/components/auth/form-field";
-import { FormStatusMessage } from "@/components/auth/form-status-message";
 import { ResendConfirmationForm } from "@/components/auth/resend-confirmation-form";
-import { SubmitButton } from "@/components/auth/submit-button";
 import { TurnstileField } from "@/components/auth/turnstile-field";
-import { useAuthForm } from "@/components/auth/use-auth-form";
+import { FormField } from "@/components/forms/form-field";
+import { FormStatusMessage } from "@/components/forms/form-status-message";
+import { SubmitButton } from "@/components/forms/submit-button";
+import { useFormAction } from "@/components/forms/use-form-action";
 
 export function SignInForm({ next }: { next: string }) {
   const [email, setEmail] = useState("");
   const { state, fieldErrors, handleSubmit, isPending, submissionCount } =
-    useAuthForm(signIn);
+    useFormAction(signIn);
   const needsConfirmation =
     state.status === "error" && state.code === "email_not_confirmed";
 

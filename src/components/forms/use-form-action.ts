@@ -7,20 +7,17 @@ import {
   useState,
 } from "react";
 
-import {
-  type AuthFormState,
-  initialAuthFormState,
-} from "@/lib/auth/form-state";
+import { type FormState, initialFormState } from "@/lib/forms/form-state";
 
-type AuthAction = (
-  previousState: AuthFormState,
+type FormAction = (
+  previousState: FormState,
   formData: FormData,
-) => Promise<AuthFormState>;
+) => Promise<FormState>;
 
-export function useAuthForm(action: AuthAction) {
+export function useFormAction(action: FormAction) {
   const [state, formAction, isPending] = useActionState(
     action,
-    initialAuthFormState,
+    initialFormState,
   );
   const [submissionCount, setSubmissionCount] = useState(0);
 

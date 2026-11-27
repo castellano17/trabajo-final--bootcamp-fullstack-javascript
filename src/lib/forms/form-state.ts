@@ -1,21 +1,18 @@
 import { z } from "zod";
 
-export type AuthFormState =
+export type FormState =
   | { status: "idle" }
   | {
       status: "error";
       message: string;
       fieldErrors?: Partial<Record<string, string[]>>;
-      code?: "email_not_confirmed";
+      code?: string;
     }
   | { status: "success"; message: string };
 
-export const initialAuthFormState: AuthFormState = { status: "idle" };
+export const initialFormState: FormState = { status: "idle" };
 
-export const checkInboxMessage =
-  "Revisa tu correo. Si los datos son correctos, te enviamos un enlace para continuar.";
-
-export function validationErrorState(error: z.ZodError): AuthFormState {
+export function validationErrorState(error: z.ZodError): FormState {
   return {
     status: "error",
     message: "Revisa los campos marcados.",

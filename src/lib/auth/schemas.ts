@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { displayNameField } from "@/lib/profile/schemas";
+
 const emailField = z
   .string()
   .trim()
@@ -19,11 +21,7 @@ const newPasswordField = z
   .regex(/\d/, "Incluye al menos un número.");
 
 export const signUpSchema = z.object({
-  displayName: z
-    .string()
-    .trim()
-    .min(1, "Ingresa tu nombre.")
-    .max(50, "El nombre no puede superar los 50 caracteres."),
+  displayName: displayNameField,
   email: emailField,
   password: newPasswordField,
   captchaToken: captchaTokenField,
