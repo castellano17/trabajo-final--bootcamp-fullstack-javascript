@@ -17,6 +17,7 @@ const placeRankingOrder = [
   { column: "average_rating", ascending: false },
   { column: "review_count", ascending: false },
   { column: "name", ascending: true },
+  { column: "id", ascending: true },
 ] as const;
 
 type SupabaseServerClient = Awaited<
