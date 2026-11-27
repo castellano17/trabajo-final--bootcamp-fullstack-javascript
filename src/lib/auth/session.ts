@@ -35,3 +35,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     role: profile.role,
   };
 });
+
+export function isAdmin(currentUser: CurrentUser | null): boolean {
+  return currentUser?.role === "admin";
+}

@@ -86,3 +86,15 @@ export async function listPlaceReviews(placeId: string) {
 }
 
 export type PlaceReview = Awaited<ReturnType<typeof listPlaceReviews>>[number];
+
+export async function countPlaceReviews(placeId: string): Promise<number> {
+  const supabase = await createSupabaseServerClient();
+  const { count, error } = await supabase
+    .from("reviews")
+    .select("id", { count: "exact", head: true })
+    .eq("place_id", placeId);
+  if (error) {
+    throw new Error(`Could not count reviews: ${error.code}`);
+  }
+  return count ?? 0;
+}
