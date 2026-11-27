@@ -1,9 +1,10 @@
 import { cache } from "react";
 
+import { publicStorageUrl } from "@/lib/images/public-url";
 import { featuredPlacesCount, placesPerPage } from "@/lib/places/config";
 import type { PlaceFilters } from "@/lib/places/schemas";
 import { escapeLikePattern } from "@/lib/places/search-pattern";
-import { avatarPublicUrl } from "@/lib/profile/avatar-url";
+import { avatarBucket } from "@/lib/profile/avatar-config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const rangeNotSatisfiableCode = "PGRST103";
@@ -109,7 +110,11 @@ export async function listPlaceReviews(placeId: string) {
     createdAt: review.created_at,
     author: {
       displayName: review.author.display_name,
-      avatarUrl: avatarPublicUrl(supabase, review.author.avatar_url),
+      avatarUrl: publicStorageUrl(
+        supabase,
+        avatarBucket,
+        review.author.avatar_url,
+      ),
     },
   }));
 }

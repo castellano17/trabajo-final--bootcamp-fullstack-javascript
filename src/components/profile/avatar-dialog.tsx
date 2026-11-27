@@ -36,7 +36,7 @@ import {
   avatarMinZoom,
   avatarZoomStep,
 } from "@/lib/profile/avatar-config";
-import { cropAvatar } from "@/lib/profile/resize-image";
+import { cropAvatar } from "@/lib/profile/crop-avatar";
 
 const acceptedImageTypes = ["image/jpeg", "image/png", "image/webp"];
 const unreadableImageMessage = "Elige una imagen JPEG, PNG o WebP.";

@@ -10,7 +10,7 @@ import {
 } from "@/lib/forms/form-state";
 import { logger } from "@/lib/logger";
 import { avatarBucket, avatarMaxBytes } from "@/lib/profile/avatar-config";
-import { detectImageType } from "@/lib/profile/image-type";
+import { detectImageType } from "@/lib/images/image-type";
 import { avatarFileSchema, displayNameSchema } from "@/lib/profile/schemas";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 

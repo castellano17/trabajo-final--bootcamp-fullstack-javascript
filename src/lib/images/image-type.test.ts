@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { detectImageType } from "@/lib/profile/image-type";
+import { detectImageType } from "@/lib/images/image-type";
 
 function bytesOf(...parts: (number[] | string)[]): Uint8Array {
   return Uint8Array.from(
