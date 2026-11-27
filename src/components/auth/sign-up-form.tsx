@@ -4,6 +4,7 @@ import { signUp } from "@/app/(auth)/actions";
 import { TurnstileField } from "@/components/auth/turnstile-field";
 import { FormField } from "@/components/forms/form-field";
 import { FormStatusMessage } from "@/components/forms/form-status-message";
+import { PasswordField } from "@/components/forms/password-field";
 import { SubmitButton } from "@/components/forms/submit-button";
 import { useFormAction } from "@/components/forms/use-form-action";
 
@@ -33,10 +34,9 @@ export function SignUpForm() {
         required
         errors={fieldErrors.email}
       />
-      <FormField
+      <PasswordField
         name="password"
         label="Contraseña"
-        type="password"
         autoComplete="new-password"
         required
         errors={fieldErrors.password}

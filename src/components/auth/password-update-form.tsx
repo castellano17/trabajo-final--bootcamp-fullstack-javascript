@@ -1,8 +1,8 @@
 "use client";
 
 import { updatePassword } from "@/app/(auth)/actions";
-import { FormField } from "@/components/forms/form-field";
 import { FormStatusMessage } from "@/components/forms/form-status-message";
+import { PasswordField } from "@/components/forms/password-field";
 import { SubmitButton } from "@/components/forms/submit-button";
 import { useFormAction } from "@/components/forms/use-form-action";
 
@@ -12,18 +12,16 @@ export function PasswordUpdateForm() {
 
   return (
     <form onSubmit={handleSubmit} className="grid gap-4" noValidate>
-      <FormField
+      <PasswordField
         name="password"
         label="Contraseña nueva"
-        type="password"
         autoComplete="new-password"
         required
         errors={fieldErrors.password}
       />
-      <FormField
+      <PasswordField
         name="passwordConfirmation"
         label="Repite la contraseña"
-        type="password"
         autoComplete="new-password"
         required
         errors={fieldErrors.passwordConfirmation}
