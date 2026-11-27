@@ -16,8 +16,8 @@ insert into public.reviews (id, place_id, user_id, rating, body, is_hidden) valu
   ('30000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000002', 1, 'Reseña falsa', true);
 
 insert into public.review_photos (review_id, storage_path) values
-  ('30000000-0000-0000-0000-000000000001', 'reviews/visible.jpg'),
-  ('30000000-0000-0000-0000-000000000002', 'reviews/hidden.jpg');
+  ('30000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001/30000000-0000-0000-0000-000000000001/5e6f7a8b-9c0d-4e1f-8a2b-4c5d6e7f8a9b.jpg'),
+  ('30000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002/30000000-0000-0000-0000-000000000002/6f7a8b9c-0d1e-4f2a-9b3c-5d6e7f8a9b0c.jpg');
 
 select tests.authenticate_as_anon();
 
@@ -27,8 +27,8 @@ select results_eq(
   'a visitor sees visible reviews and not hidden ones'
 );
 select results_eq(
-  $$ select storage_path from public.review_photos where storage_path like 'reviews/%' $$,
-  $$ values ('reviews/visible.jpg') $$,
+  $$ select storage_path from public.review_photos where review_id in ('30000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000002') $$,
+  $$ values ('10000000-0000-0000-0000-000000000001/30000000-0000-0000-0000-000000000001/5e6f7a8b-9c0d-4e1f-8a2b-4c5d6e7f8a9b.jpg') $$,
   'a visitor sees photos of visible reviews only'
 );
 
@@ -89,14 +89,14 @@ select lives_ok(
 );
 select throws_ok(
   $$ insert into public.review_photos (review_id, storage_path)
-     values ('30000000-0000-0000-0000-000000000002', 'reviews/intruder.jpg') $$,
+     values ('30000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001/30000000-0000-0000-0000-000000000002/7a8b9c0d-1e2f-4a3b-8c4d-6e7f8a9b0c1d.jpg') $$,
   '42501',
   null,
   'a user cannot add photos to someone else review'
 );
 select lives_ok(
   $$ insert into public.review_photos (review_id, storage_path)
-     values ('30000000-0000-0000-0000-000000000001', 'reviews/own.jpg') $$,
+     values ('30000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001/30000000-0000-0000-0000-000000000001/8b9c0d1e-2f3a-4b4c-9d5e-7f8a9b0c1d2e.jpg') $$,
   'a user can add photos to their own review'
 );
 
