@@ -48,9 +48,10 @@ export function DeletePlaceDialog({
         <FormStatusMessage state={state} />
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className="max-sm:w-full">
             <SubmitButton
               variant="destructive"
+              className="w-full"
               isPending={isPending}
               pendingLabel="Borrando…"
             >

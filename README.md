@@ -183,3 +183,13 @@ El esquema usa nombres en inglés. Equivalencia con los campos de la consigna:
 | `comments`      | texto                                                                 | `body`                                                                         |
 | `review_votes`  | review_id, user_id                                                    | `review_id`, `user_id`                                                         |
 | `reports`       | reportado_por, motivo, estado                                         | `reported_by`, `reason`, `status` (pending, accepted, rejected)                |
+
+## Créditos de las fotos
+
+Las fotos de la portada son de [Unsplash](https://unsplash.com) y se usan bajo la [licencia de Unsplash](https://unsplash.com/license). Están optimizadas en WebP dentro de `public/images/`.
+
+| Archivo                 | Autor          | Foto original                             |
+| ----------------------- | -------------- | ----------------------------------------- |
+| `tacos-callejeros.webp` | Joshua Soliz   | <https://unsplash.com/photos/4xwEQ6IIubA> |
+| `tacos-con-limon.webp`  | Tai's Captures | <https://unsplash.com/photos/JiRSy0GfqPA> |
+| `letrero-de-tacos.webp` | Jason Leung    | <https://unsplash.com/photos/7UxRDi7Z9KA> |

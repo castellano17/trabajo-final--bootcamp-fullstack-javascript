@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { pageAlert, submitSignIn } from "./support/auth";
+import { readCspViolations, trackCspViolations } from "./support/csp";
 
 const seedPassword = "password123";
 const tacosElGueroPath = "/lugares/b0000000-0000-0000-0000-000000000001";
@@ -171,6 +172,67 @@ test.describe("place page", () => {
       await expect(page.getByText(notFoundText)).toBeVisible();
     });
   }
+});
+
+test.describe("rating summary and security", () => {
+  async function ratingRows(page: Page) {
+    return page
+      .getByRole("list", { name: "Calificaciones por puntaje" })
+      .getByRole("listitem")
+      .evaluateAll((rows) =>
+        rows.map((row) => {
+          const bar = row.querySelector('[role="progressbar"]');
+          return {
+            label: bar?.getAttribute("aria-label"),
+            percentage: bar?.getAttribute("aria-valuenow"),
+            count: row.lastElementChild?.textContent,
+          };
+        }),
+      );
+  }
+
+  test("the rating summary counts the visible reviews of each score", async ({
+    page,
+  }) => {
+    await page.goto(tacosElGueroPath);
+
+    await expect(
+      page.getByRole("complementary", { name: "Resumen de calificaciones" }),
+    ).toContainText("4.5");
+    expect(await ratingRows(page)).toEqual([
+      { label: "5 estrellas", percentage: "50", count: "1" },
+      { label: "4 estrellas", percentage: "50", count: "1" },
+      { label: "3 estrellas", percentage: "0", count: "0" },
+      { label: "2 estrellas", percentage: "0", count: "0" },
+      { label: "1 estrella", percentage: "0", count: "0" },
+    ]);
+  });
+
+  test("a place without visible reviews shows every score at zero", async ({
+    page,
+  }) => {
+    await page.goto(carnitasPath);
+
+    const rows = await ratingRows(page);
+    expect(rows).toHaveLength(5);
+    expect(
+      rows.every((row) => row.count === "0" && row.percentage === "0"),
+    ).toBe(true);
+  });
+
+  test("the listing and a place page run without CSP violations", async ({
+    page,
+  }) => {
+    await trackCspViolations(page);
+
+    await page.goto("/lugares");
+    await expect(placeCards(page).first()).toBeVisible();
+    expect(await readCspViolations(page)).toEqual([]);
+
+    await page.goto(tacosElGueroPath);
+    await expect(page.getByRole("article").first()).toBeVisible();
+    expect(await readCspViolations(page)).toEqual([]);
+  });
 });
 
 test.describe("place management", () => {
