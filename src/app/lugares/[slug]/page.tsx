@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { PlaceAdminActions } from "@/components/places/place-admin-actions";
@@ -11,28 +10,26 @@ import {
 import { HiddenReviewNotice } from "@/components/reviews/hidden-review-notice";
 import { PlaceReviewActions } from "@/components/reviews/place-review-actions";
 import { getCurrentUser, isAdmin } from "@/lib/auth/session";
-import { getPlace } from "@/lib/places/queries";
-import { placeIdSchema } from "@/lib/places/schemas";
+import { placePath } from "@/lib/places/paths";
+import { findPlaceForRoute } from "@/lib/places/place-route";
+import { getPlaceBySlug } from "@/lib/places/queries";
+import { placeSlugSchema } from "@/lib/places/schemas";
 import { getOwnReview } from "@/lib/reviews/queries";
-
-async function findPlaceOrNull(id: string) {
-  return placeIdSchema.safeParse(id).success ? getPlace(id) : null;
-}
 
 export async function generateMetadata({
   params,
-}: PageProps<"/lugares/[id]">): Promise<Metadata> {
-  const place = await findPlaceOrNull((await params).id);
+}: PageProps<"/lugares/[slug]">): Promise<Metadata> {
+  const { slug } = await params;
+  const place = placeSlugSchema.safeParse(slug).success
+    ? await getPlaceBySlug(slug)
+    : null;
   return place ? { title: `${place.name} · ReseñIt` } : {};
 }
 
 export default async function PlacePage({
   params,
-}: PageProps<"/lugares/[id]">) {
-  const place = await findPlaceOrNull((await params).id);
-  if (!place) {
-    notFound();
-  }
+}: PageProps<"/lugares/[slug]">) {
+  const place = await findPlaceForRoute((await params).slug, placePath);
   const currentUser = await getCurrentUser();
   const ownReview = currentUser ? await getOwnReview(place.id) : null;
 
@@ -52,7 +49,11 @@ export default async function PlacePage({
           >
             Reseñas
           </h2>
-          <PlaceReviewActions placeId={place.id} ownReview={ownReview} />
+          <PlaceReviewActions
+            placeId={place.id}
+            placeSlug={place.slug}
+            ownReview={ownReview}
+          />
         </div>
         {ownReview?.isHidden && <HiddenReviewNotice />}
         <Suspense fallback={<PlaceReviewsSkeleton />}>

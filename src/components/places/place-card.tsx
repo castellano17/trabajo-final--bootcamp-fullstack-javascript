@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { placeCategoryLabels } from "@/lib/places/categories";
 import { categoryAppearance } from "@/lib/places/category-appearance";
 import { formatRating, formatReviewCount } from "@/lib/places/format";
+import { placePath } from "@/lib/places/paths";
 import type { PlaceSummary } from "@/lib/places/queries";
 
 export function PlaceCard({ place }: { place: PlaceSummary }) {
@@ -19,7 +20,7 @@ export function PlaceCard({ place }: { place: PlaceSummary }) {
 
   return (
     <Link
-      href={`/lugares/${place.id}`}
+      href={placePath(place.slug)}
       className="group block h-full rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
     >
       <Card className="h-full gap-0 py-0 transition-all duration-200 group-hover:-translate-y-1 group-hover:shadow-lg">

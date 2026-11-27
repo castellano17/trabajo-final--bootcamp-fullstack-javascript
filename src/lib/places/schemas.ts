@@ -27,6 +27,11 @@ export const placeFormSchema = z.object({
 
 export const placeIdSchema = z.guid();
 
+export const placeSlugSchema = z
+  .string()
+  .max(64)
+  .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+
 export const placeFiltersSchema = z
   .object({
     categoria: z.preprocess(

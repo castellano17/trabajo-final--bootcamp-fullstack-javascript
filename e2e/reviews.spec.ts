@@ -123,7 +123,7 @@ test.describe("reviews", () => {
     await adminPage.getByLabel("Categoría").selectOption("guisado");
     await adminPage.getByLabel("Dirección").fill("Calle de Prueba 8");
     await adminPage.getByRole("button", { name: "Crear lugar" }).click();
-    await expect(adminPage).toHaveURL(/\/lugares\/[0-9a-f-]{36}$/);
+    await expect(adminPage).toHaveURL(/\/lugares\/zz-prueba-[a-z0-9-]+$/);
     placePath = new URL(adminPage.url()).pathname;
     reviewPath = `${placePath}/resena`;
     await adminPage.close();
@@ -372,7 +372,7 @@ test.describe("review page edge cases", () => {
   test("the author of a hidden review sees the notice and no write review button", async ({
     page,
   }) => {
-    const carnitasPath = "/lugares/b0000000-0000-0000-0000-000000000004";
+    const carnitasPath = "/lugares/carnitas-michoacan";
     await signIn(page, userEmail, carnitasPath);
 
     await expect(

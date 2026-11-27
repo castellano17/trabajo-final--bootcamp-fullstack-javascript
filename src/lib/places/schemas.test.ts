@@ -4,6 +4,7 @@ import {
   placeFiltersSchema,
   placeFormSchema,
   placeIdSchema,
+  placeSlugSchema,
 } from "@/lib/places/schemas";
 
 const validPlace = {
@@ -86,5 +87,22 @@ describe("placeFiltersSchema", () => {
     expect(
       placeFiltersSchema.parse({ q: "a".repeat(150) }).search,
     ).toHaveLength(100);
+  });
+});
+
+describe("placeSlugSchema", () => {
+  it("accepts only the slug format the database generates", () => {
+    expect(placeSlugSchema.safeParse("tacos-el-guero").success).toBe(true);
+    expect(placeSlugSchema.safeParse("nuevo-2").success).toBe(true);
+    for (const invalidSlug of [
+      "",
+      "Tacos-El-Guero",
+      "tacos--guero",
+      "-tacos",
+      "tacos_guero",
+      "a".repeat(65),
+    ]) {
+      expect(placeSlugSchema.safeParse(invalidSlug).success).toBe(false);
+    }
   });
 });

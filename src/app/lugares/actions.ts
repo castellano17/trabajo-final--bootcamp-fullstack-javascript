@@ -10,6 +10,7 @@ import {
   validationErrorState,
 } from "@/lib/forms/form-state";
 import { logger } from "@/lib/logger";
+import { placePath } from "@/lib/places/paths";
 import { placeFormSchema, placeIdSchema } from "@/lib/places/schemas";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -55,7 +56,7 @@ export async function createPlace(
   const { data, error } = await supabase
     .from("places")
     .insert(parsed.data)
-    .select("id")
+    .select("id, slug")
     .single();
   if (error) {
     logger.warn("place.save_failed", { userId, reason: error.code });
@@ -64,7 +65,7 @@ export async function createPlace(
 
   logger.info("place.created", { userId, placeId: data.id });
   revalidatePath("/lugares");
-  redirect(`/lugares/${data.id}`);
+  redirect(placePath(data.slug));
 }
 
 export async function updatePlace(
@@ -83,11 +84,11 @@ export async function updatePlace(
   }
 
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("places")
     .update(parsed.data)
     .eq("id", placeId)
-    .select("id")
+    .select("slug")
     .single();
   if (error) {
     logger.warn("place.save_failed", {
@@ -100,8 +101,8 @@ export async function updatePlace(
 
   logger.info("place.updated", { userId, placeId });
   revalidatePath("/lugares");
-  revalidatePath(`/lugares/${placeId}`);
-  redirect(`/lugares/${placeId}`);
+  revalidatePath(placePath(data.slug));
+  redirect(placePath(data.slug));
 }
 
 export async function deletePlace(placeId: string): Promise<FormState> {

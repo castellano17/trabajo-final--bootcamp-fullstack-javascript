@@ -3,18 +3,21 @@ import Link from "next/link";
 
 import { DeleteReviewDialog } from "@/components/reviews/delete-review-dialog";
 import { Button } from "@/components/ui/button";
+import { placeReviewPath } from "@/lib/places/paths";
 import type { OwnReview } from "@/lib/reviews/queries";
 
 type PlaceReviewActionsProps = {
   placeId: string;
+  placeSlug: string;
   ownReview: OwnReview | null;
 };
 
 export function PlaceReviewActions({
   placeId,
+  placeSlug,
   ownReview,
 }: PlaceReviewActionsProps) {
-  const reviewPagePath = `/lugares/${placeId}/resena`;
+  const reviewPagePath = placeReviewPath(placeSlug);
 
   if (!ownReview) {
     return (

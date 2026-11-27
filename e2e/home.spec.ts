@@ -122,11 +122,7 @@ test.describe("home page sections", () => {
     expect((await header.boundingBox())?.y).toBe(0);
   });
 
-  for (const path of [
-    "/",
-    "/lugares",
-    "/lugares/b0000000-0000-0000-0000-000000000001",
-  ]) {
+  for (const path of ["/", "/lugares", "/lugares/tacos-el-guero"]) {
     test(`the footer shows on ${path}`, async ({ page }) => {
       await page.goto(path);
 

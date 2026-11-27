@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { DeletePlaceDialog } from "@/components/places/delete-place-dialog";
 import { Button } from "@/components/ui/button";
+import { placeEditPath } from "@/lib/places/paths";
 import { countPlaceReviews, type PlaceDetail } from "@/lib/places/queries";
 
 export async function PlaceAdminActions({ place }: { place: PlaceDetail }) {
@@ -10,7 +11,7 @@ export async function PlaceAdminActions({ place }: { place: PlaceDetail }) {
   return (
     <div className="flex flex-wrap gap-2">
       <Button asChild variant="outline">
-        <Link href={`/lugares/${place.id}/editar`}>Editar</Link>
+        <Link href={placeEditPath(place.slug)}>Editar</Link>
       </Button>
       <DeletePlaceDialog
         placeId={place.id}
