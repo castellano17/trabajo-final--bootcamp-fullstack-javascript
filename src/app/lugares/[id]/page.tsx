@@ -33,15 +33,26 @@ export default async function PlacePage({
   const currentUser = await getCurrentUser();
 
   return (
-    <main className="mx-auto grid w-full max-w-3xl flex-1 content-start gap-10 px-4 py-10">
-      <PlaceDetails place={place} />
-      {isAdmin(currentUser) && <PlaceAdminActions place={place} />}
+    <main className="mx-auto grid w-full max-w-6xl flex-1 content-start gap-10 px-4 py-10">
+      <PlaceDetails
+        place={place}
+        adminActions={
+          isAdmin(currentUser) ? <PlaceAdminActions place={place} /> : null
+        }
+      />
       <section aria-labelledby="place-reviews-heading" className="grid gap-4">
-        <h2 id="place-reviews-heading" className="text-xl font-semibold">
+        <h2
+          id="place-reviews-heading"
+          className="font-heading text-2xl font-bold"
+        >
           Reseñas
         </h2>
         <Suspense fallback={<PlaceReviewsSkeleton />}>
-          <PlaceReviews placeId={place.id} />
+          <PlaceReviews
+            placeId={place.id}
+            averageRating={place.average_rating}
+            reviewCount={place.review_count}
+          />
         </Suspense>
       </section>
     </main>

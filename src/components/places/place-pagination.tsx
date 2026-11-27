@@ -39,7 +39,7 @@ export function PlacePagination({ filters, totalPages }: PlacePaginationProps) {
       ) : (
         <span />
       )}
-      <p className="text-sm text-muted-foreground">
+      <p className="rounded-full bg-muted px-3 py-1 text-sm font-medium text-muted-foreground">
         Página {filters.page} de {totalPages}
       </p>
       {nextPage ? (

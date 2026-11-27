@@ -1,30 +1,47 @@
+import { MapPin } from "lucide-react";
 import Link from "next/link";
 
 import { RatingStars } from "@/components/places/rating-stars";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { placeCategoryLabels } from "@/lib/places/categories";
+import { categoryAppearance } from "@/lib/places/category-appearance";
 import { formatRating, formatReviewCount } from "@/lib/places/format";
 import type { PlaceSummary } from "@/lib/places/queries";
 
 export function PlaceCard({ place }: { place: PlaceSummary }) {
+  const {
+    icon: CategoryIcon,
+    tileClassName,
+    iconClassName,
+  } = categoryAppearance[place.category];
+
   return (
     <Link
       href={`/lugares/${place.id}`}
       className="group block h-full rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
     >
-      <Card className="h-full transition-colors group-hover:bg-muted/40">
-        <CardHeader className="gap-2">
-          <Badge variant="secondary">
-            {placeCategoryLabels[place.category]}
-          </Badge>
-          <CardTitle>
-            <h2 className="text-lg font-semibold">{place.name}</h2>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-2">
-          <p className="text-sm text-muted-foreground">{place.address}</p>
-          <div className="flex items-center gap-2 text-sm">
+      <Card className="h-full gap-0 py-0 transition-all duration-200 group-hover:-translate-y-1 group-hover:shadow-lg">
+        <div
+          className={`flex h-28 items-center justify-center ${tileClassName}`}
+        >
+          <CategoryIcon
+            aria-hidden="true"
+            className={`size-11 transition-transform duration-200 group-hover:scale-110 ${iconClassName}`}
+          />
+        </div>
+        <CardContent className="grid flex-1 content-start gap-3 py-4">
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="text-lg leading-tight font-semibold">
+              {place.name}
+            </h2>
+            <Badge variant="secondary" className="shrink-0">
+              {placeCategoryLabels[place.category]}
+            </Badge>
+          </div>
+          <Separator />
+          <div className="flex items-center gap-2">
             <RatingStars rating={place.average_rating} />
             <span className="font-medium">
               {formatRating(place.average_rating)}
@@ -33,6 +50,10 @@ export function PlaceCard({ place }: { place: PlaceSummary }) {
               ({formatReviewCount(place.review_count)})
             </span>
           </div>
+          <p className="flex items-start gap-1.5 text-muted-foreground">
+            <MapPin aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+            {place.address}
+          </p>
         </CardContent>
       </Card>
     </Link>

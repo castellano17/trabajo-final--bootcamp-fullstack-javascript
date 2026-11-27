@@ -16,7 +16,7 @@ export function PlaceFilters({ filters }: { filters: PlaceFiltersValues }) {
       method="get"
       role="search"
       aria-label="Filtrar taquerías"
-      className="grid gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-end"
+      className="grid gap-3 rounded-2xl border bg-card p-4 shadow-xs sm:grid-cols-[1fr_auto_auto] sm:items-end"
     >
       <div className="grid gap-2">
         <Label htmlFor="place-search">Buscar por nombre</Label>
