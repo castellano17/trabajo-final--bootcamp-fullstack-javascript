@@ -1,0 +1,15 @@
+<h2>Recupera tu contraseña de ReseñIt</h2>
+
+<p>Recibimos una solicitud para cambiar la contraseña de tu cuenta.</p>
+
+<p>
+  <a
+    href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=recovery&next=/actualizar-contrasena"
+    >Elegir una contraseña nueva</a
+  >
+</p>
+
+<p>
+  El enlace vence en una hora. Si no pediste este cambio, ignora este correo: tu
+  contraseña sigue siendo la misma.
+</p>
