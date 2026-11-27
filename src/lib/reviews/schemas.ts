@@ -1,14 +1,9 @@
 import { z } from "zod";
 
-import {
-  reviewBodyMaxLength,
-  reviewPhotoMaxBytes,
-  reviewPhotoMaxCount,
-} from "@/lib/reviews/config";
+import { reviewBodyMaxLength, reviewPhotoMaxBytes } from "@/lib/reviews/config";
+import { tooLargePhotoMessage } from "@/lib/reviews/messages";
 
 const missingRatingMessage = "Elige un puntaje.";
-
-export const tooManyPhotosMessage = `Una reseña puede tener hasta ${reviewPhotoMaxCount} fotos.`;
 
 export const reviewFormSchema = z.object({
   rating: z.coerce
@@ -28,7 +23,7 @@ export const reviewFormSchema = z.object({
     z
       .file("Elige una foto.")
       .min(1, "Elige una foto.")
-      .max(reviewPhotoMaxBytes, "Cada foto puede pesar hasta 2 MB."),
+      .max(reviewPhotoMaxBytes, tooLargePhotoMessage),
   ),
   removedPhotoIds: z.array(z.guid()),
 });

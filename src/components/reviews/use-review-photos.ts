@@ -8,7 +8,10 @@ import {
   reviewPhotoMaxCount,
   reviewPhotoMaxDimensionInPixels,
 } from "@/lib/reviews/config";
-import { tooManyPhotosMessage } from "@/lib/reviews/schemas";
+import {
+  tooLargePhotoMessage,
+  tooManyPhotosMessage,
+} from "@/lib/reviews/messages";
 
 export type StoredPhoto = { id: string; url: string };
 
@@ -17,7 +20,6 @@ export type NewPhoto = { file: File; previewUrl: string };
 const acceptedImageTypes = ["image/jpeg", "image/png", "image/webp"];
 const unreadablePhotoMessage =
   "No pudimos leer esta foto. Prueba con JPEG, PNG o WebP.";
-const tooLargePhotoMessage = "Cada foto puede pesar hasta 2 MB.";
 
 async function preparePhotos(files: File[]): Promise<File[] | string> {
   if (files.some((file) => !acceptedImageTypes.includes(file.type))) {

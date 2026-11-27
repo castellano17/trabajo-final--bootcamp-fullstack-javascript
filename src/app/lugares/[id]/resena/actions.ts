@@ -17,16 +17,13 @@ import {
   reviewPhotoMaxBytes,
   reviewPhotoMaxCount,
 } from "@/lib/reviews/config";
+import { tooManyPhotosMessage } from "@/lib/reviews/messages";
 import { photoCountAfterEdit } from "@/lib/reviews/photo-count";
 import {
   removeReviewPhotoFiles,
   uploadReviewPhotos,
 } from "@/lib/reviews/photo-storage";
-import {
-  type ReviewForm,
-  reviewFormSchema,
-  tooManyPhotosMessage,
-} from "@/lib/reviews/schemas";
+import { type ReviewForm, reviewFormSchema } from "@/lib/reviews/schemas";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type SupabaseServerClient = Awaited<
