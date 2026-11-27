@@ -12,11 +12,21 @@ export type FormState =
 
 export const initialFormState: FormState = { status: "idle" };
 
+const invalidFieldsMessage = "Revisa los campos marcados.";
+
 export function validationErrorState(error: z.ZodError): FormState {
   return {
     status: "error",
-    message: "Revisa los campos marcados.",
+    message: invalidFieldsMessage,
     fieldErrors: z.flattenError(error).fieldErrors,
+  };
+}
+
+export function fieldErrorState(fieldName: string, message: string): FormState {
+  return {
+    status: "error",
+    message: invalidFieldsMessage,
+    fieldErrors: { [fieldName]: [message] },
   };
 }
 

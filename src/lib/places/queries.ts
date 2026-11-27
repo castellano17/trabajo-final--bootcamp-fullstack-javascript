@@ -5,6 +5,7 @@ import { featuredPlacesCount, placesPerPage } from "@/lib/places/config";
 import type { PlaceFilters } from "@/lib/places/schemas";
 import { escapeLikePattern } from "@/lib/places/search-pattern";
 import { avatarBucket } from "@/lib/profile/avatar-config";
+import { reviewPhotoBucket } from "@/lib/reviews/config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const rangeNotSatisfiableCode = "PGRST103";
@@ -94,11 +95,12 @@ export async function listPlaceReviews(placeId: string) {
   const { data, error } = await supabase
     .from("reviews")
     .select(
-      "id, rating, body, created_at, author:profiles!reviews_user_id_fkey(display_name, avatar_url)",
+      "id, rating, body, created_at, author:profiles!reviews_user_id_fkey(display_name, avatar_url), photos:review_photos(id, storage_path, created_at)",
     )
     .eq("place_id", placeId)
     .eq("is_hidden", false)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .order("created_at", { referencedTable: "photos", ascending: true });
   if (error) {
     throw new Error(`Could not list reviews: ${error.code}`);
   }
@@ -116,6 +118,10 @@ export async function listPlaceReviews(placeId: string) {
         review.author.avatar_url,
       ),
     },
+    photos: review.photos.map((photo) => ({
+      id: photo.id,
+      url: publicStorageUrl(supabase, reviewPhotoBucket, photo.storage_path),
+    })),
   }));
 }
 

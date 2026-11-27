@@ -5,6 +5,16 @@ import type { Database } from "@/types/database";
 export function publicStorageUrl(
   supabase: SupabaseClient<Database>,
   bucket: string,
+  path: string,
+): string;
+export function publicStorageUrl(
+  supabase: SupabaseClient<Database>,
+  bucket: string,
+  path: string | null,
+): string | null;
+export function publicStorageUrl(
+  supabase: SupabaseClient<Database>,
+  bucket: string,
   path: string | null,
 ): string | null {
   return path

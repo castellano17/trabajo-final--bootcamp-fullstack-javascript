@@ -15,6 +15,10 @@ export function formatReviewCount(reviewCount: number): string {
   return reviewCount === 1 ? "1 reseña" : `${reviewCount} reseñas`;
 }
 
+export function formatStarCount(rating: number): string {
+  return rating === 1 ? "1 estrella" : `${rating} estrellas`;
+}
+
 export function formatReviewDate(isoDate: string): string {
   return reviewDateFormatter.format(new Date(isoDate));
 }
