@@ -1,6 +1,6 @@
-import type { AuthFormState } from "@/lib/auth/form-state";
+import type { FormState } from "@/lib/forms/form-state";
 
-export function FormStatusMessage({ state }: { state: AuthFormState }) {
+export function FormStatusMessage({ state }: { state: FormState }) {
   if (state.status === "idle") {
     return null;
   }

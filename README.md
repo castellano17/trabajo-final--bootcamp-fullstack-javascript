@@ -66,9 +66,21 @@ Cloudflare (<https://dash.cloudflare.com> → Turnstile): crear un widget _Manag
 
 Vercel (proyecto → **Settings → Environment Variables**): crear las tres variables `NEXT_PUBLIC_*` para _Production_ y _Preview_ y volver a desplegar.
 
+## Perfil y avatares
+
+- En `/perfil` cada usuario cambia su nombre (de 1 a 50 caracteres) y su foto. La cabecera muestra la foto, o las iniciales si no hay foto.
+- El navegador recorta la foto al centro en un cuadrado de 512×512 y la convierte a WebP antes de subirla, así que una foto de celular queda en unos 50 KB.
+- Se aceptan JPEG, PNG y WebP de hasta 2 MB.
+- Cómo se protegen los archivos:
+  - El servidor revisa el tipo real del archivo por sus primeros bytes, no por la extensión ni por el tipo que declara el navegador.
+  - El bucket `avatars` es público para lectura, pero sus políticas solo dejan subir, reemplazar y borrar dentro de la carpeta propia (`avatars/<id del usuario>/`).
+  - `profiles.avatar_url` guarda la ruta del archivo, y una restricción de la base obliga a que esté en la carpeta del propio usuario: nadie puede usar una imagen externa ni la de otro usuario.
+  - Cada subida usa un nombre de archivo nuevo y borra el anterior, así que ninguna caché muestra una foto vieja y no se acumulan archivos.
+- El bucket y sus políticas los crea la migración `create_avatars_bucket`. En producción los aplica `deploy-db`; no hay que configurar nada en el panel de Supabase.
+
 ## Logs
 
-La app escribe una línea JSON por evento de autenticación en la salida estándar, que Vercel muestra en **Logs**. Cada línea tiene `level`, `event`, `timestamp` y contexto como `userId` o `reason`:
+La app escribe una línea JSON por evento de autenticación y de perfil en la salida estándar, que Vercel muestra en **Logs**. Cada línea tiene `level`, `event`, `timestamp` y contexto como `userId` o `reason`:
 
 ```json
 {
@@ -79,17 +91,20 @@ La app escribe una línea JSON por evento de autenticación en la salida estánd
 }
 ```
 
-| Evento                                                                                 | Nivel       | Para qué sirve                                                                    |
-| -------------------------------------------------------------------------------------- | ----------- | --------------------------------------------------------------------------------- |
-| `auth.sign_up.requested`, `auth.sign_up.confirmed`                                     | info        | Medir cuántos registros llegan a confirmarse                                      |
-| `auth.sign_in.succeeded`, `auth.sign_out`                                              | info        | Auditar el acceso de cada usuario                                                 |
-| `auth.sign_in.failed`                                                                  | warn        | Detectar intentos de fuerza bruta (`invalid_credentials`) o cuentas sin confirmar |
-| `auth.sign_up.failed`, `auth.confirmation.resend_failed`, `auth.password_reset.failed` | warn        | Detectar CAPTCHA fallidos o límites de envío alcanzados                           |
-| `auth.confirmation.resent`, `auth.password_reset.requested`                            | info        | Seguir los envíos de correo cuando alguien dice que no le llegó                   |
-| `auth.password_reset.verified`, `auth.password.updated`, `auth.password.update_failed` | info / warn | Auditar los cambios de contraseña                                                 |
-| `auth.confirm.failed`                                                                  | warn        | Detectar enlaces vencidos o manipulados (`otp_expired`, `malformed_link`)         |
+| Evento                                                                                 | Nivel       | Para qué sirve                                                                                        |
+| -------------------------------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------- |
+| `auth.sign_up.requested`, `auth.sign_up.confirmed`                                     | info        | Medir cuántos registros llegan a confirmarse                                                          |
+| `auth.sign_in.succeeded`, `auth.sign_out`                                              | info        | Auditar el acceso de cada usuario                                                                     |
+| `auth.sign_in.failed`                                                                  | warn        | Detectar intentos de fuerza bruta (`invalid_credentials`) o cuentas sin confirmar                     |
+| `auth.sign_up.failed`, `auth.confirmation.resend_failed`, `auth.password_reset.failed` | warn        | Detectar CAPTCHA fallidos o límites de envío alcanzados                                               |
+| `auth.confirmation.resent`, `auth.password_reset.requested`                            | info        | Seguir los envíos de correo cuando alguien dice que no le llegó                                       |
+| `auth.password_reset.verified`, `auth.password.updated`, `auth.password.update_failed` | info / warn | Auditar los cambios de contraseña                                                                     |
+| `auth.confirm.failed`                                                                  | warn        | Detectar enlaces vencidos o manipulados (`otp_expired`, `malformed_link`)                             |
+| `profile.display_name.updated`, `profile.avatar.updated`, `profile.avatar.removed`     | info        | Auditar los cambios de perfil                                                                         |
+| `profile.avatar.rejected`                                                              | warn        | Detectar archivos que no son imágenes (`unsupported_type`) o demasiado grandes (`too_large`)          |
+| `profile.update.failed`                                                                | warn        | Detectar fallos al guardar en la base o en Storage, incluido un avatar anterior que no se pudo borrar |
 
-Qué no se registra y por qué: correos, contraseñas, tokens ni cookies. El logger descarta cualquier campo cuyo nombre contenga `email`, `password`, `token`, `secret` o `cookie`, aunque se le pase por error. Así los logs sirven para investigar incidentes sin convertirse en una fuga de datos personales.
+Qué no se registra y por qué: correos, contraseñas, tokens, cookies ni nombres de archivo. El logger descarta cualquier campo cuyo nombre contenga `email`, `password`, `token`, `secret` o `cookie`, aunque se le pase por error. Así los logs sirven para investigar incidentes sin convertirse en una fuga de datos personales.
 
 ## Base de datos local
 

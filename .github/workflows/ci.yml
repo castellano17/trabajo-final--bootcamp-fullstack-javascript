@@ -70,7 +70,7 @@ jobs:
       - name: Start Supabase
         run: >-
           pnpm exec supabase start
-          -x realtime,storage-api,imgproxy,studio,edge-runtime,logflare,vector,supavisor,postgres-meta
+          -x realtime,imgproxy,studio,edge-runtime,logflare,vector,supavisor,postgres-meta
 
       - name: Use the local Supabase publishable key
         run: |
@@ -95,7 +95,7 @@ jobs:
       - name: Start Supabase
         run: >-
           pnpm exec supabase start
-          -x realtime,storage-api,imgproxy,kong,mailpit,postgrest,studio,edge-runtime,logflare,vector,supavisor
+          -x realtime,imgproxy,kong,mailpit,postgrest,studio,edge-runtime,logflare,vector,supavisor
 
       - name: Run database tests
         run: pnpm db:test

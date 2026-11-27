@@ -1,11 +1,11 @@
 "use client";
 
 import { resendConfirmation } from "@/app/(auth)/actions";
-import { FormField } from "@/components/auth/form-field";
-import { FormStatusMessage } from "@/components/auth/form-status-message";
-import { SubmitButton } from "@/components/auth/submit-button";
 import { TurnstileField } from "@/components/auth/turnstile-field";
-import { useAuthForm } from "@/components/auth/use-auth-form";
+import { FormField } from "@/components/forms/form-field";
+import { FormStatusMessage } from "@/components/forms/form-status-message";
+import { SubmitButton } from "@/components/forms/submit-button";
+import { useFormAction } from "@/components/forms/use-form-action";
 
 export function ResendConfirmationForm({
   defaultEmail,
@@ -13,7 +13,7 @@ export function ResendConfirmationForm({
   defaultEmail: string;
 }) {
   const { state, fieldErrors, handleSubmit, isPending, submissionCount } =
-    useAuthForm(resendConfirmation);
+    useFormAction(resendConfirmation);
 
   return (
     <form

@@ -2,7 +2,7 @@
 
 import { useFormStatus } from "react-dom";
 
-import { SubmitButton } from "@/components/auth/submit-button";
+import { SubmitButton } from "@/components/forms/submit-button";
 
 export function SignOutButton() {
   const { pending } = useFormStatus();
