@@ -1,6 +1,6 @@
 import { cache } from "react";
 
-import { placesPerPage } from "@/lib/places/config";
+import { featuredPlacesCount, placesPerPage } from "@/lib/places/config";
 import type { PlaceFilters } from "@/lib/places/schemas";
 import { escapeLikePattern } from "@/lib/places/search-pattern";
 import { avatarPublicUrl } from "@/lib/profile/avatar-url";
@@ -8,19 +8,37 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const rangeNotSatisfiableCode = "PGRST103";
 
+const placeSummaryColumns =
+  "id, name, category, address, average_rating, review_count";
+
+const placeRankingOrder = [
+  { column: "average_rating", ascending: false },
+  { column: "review_count", ascending: false },
+  { column: "name", ascending: true },
+] as const;
+
+type SupabaseServerClient = Awaited<
+  ReturnType<typeof createSupabaseServerClient>
+>;
+
+function rankedPlacesQuery(supabase: SupabaseServerClient) {
+  let query = supabase
+    .from("places")
+    .select(placeSummaryColumns, { count: "exact" });
+  for (const { column, ascending } of placeRankingOrder) {
+    query = query.order(column, { ascending });
+  }
+  return query;
+}
+
 export async function listPlaces(filters: PlaceFilters) {
   const supabase = await createSupabaseServerClient();
   const firstRow = (filters.page - 1) * placesPerPage;
 
-  let query = supabase
-    .from("places")
-    .select("id, name, category, address, average_rating, review_count", {
-      count: "exact",
-    })
-    .order("average_rating", { ascending: false })
-    .order("review_count", { ascending: false })
-    .order("name", { ascending: true })
-    .range(firstRow, firstRow + placesPerPage - 1);
+  let query = rankedPlacesQuery(supabase).range(
+    firstRow,
+    firstRow + placesPerPage - 1,
+  );
   if (filters.category) {
     query = query.eq("category", filters.category);
   }
@@ -41,6 +59,17 @@ export async function listPlaces(filters: PlaceFilters) {
 export type PlaceSummary = Awaited<
   ReturnType<typeof listPlaces>
 >["places"][number];
+
+export async function listTopRatedPlaces(): Promise<PlaceSummary[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await rankedPlacesQuery(supabase)
+    .gt("review_count", 0)
+    .limit(featuredPlacesCount);
+  if (error) {
+    throw new Error(`Could not list top rated places: ${error.code}`);
+  }
+  return data;
+}
 
 export const getPlace = cache(async (placeId: string) => {
   const supabase = await createSupabaseServerClient();
