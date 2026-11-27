@@ -1,20 +1,6 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-async function trackCspViolations(page: Page) {
-  await page.addInitScript(() => {
-    const violations: string[] = [];
-    Object.assign(window, { cspViolations: violations });
-    document.addEventListener("securitypolicyviolation", (event) => {
-      violations.push(`${event.violatedDirective} ${event.blockedURI}`);
-    });
-  });
-}
-
-function readCspViolations(page: Page) {
-  return page.evaluate(
-    () => (window as unknown as { cspViolations: string[] }).cspViolations,
-  );
-}
+import { readCspViolations, trackCspViolations } from "./support/csp";
 
 test("responses include the security headers", async ({ request }) => {
   const response = await request.get("/");
