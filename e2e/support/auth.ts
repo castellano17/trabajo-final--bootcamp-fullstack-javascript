@@ -4,6 +4,8 @@ import { latestEmailLinkTo } from "./mailpit";
 
 export const validPassword = "Secreta123";
 
+export const seedPassword = "password123";
+
 export function uniqueEmail(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@test.local`;
 }
@@ -78,4 +80,13 @@ export async function createConfirmedUser(
   await expect(accountNavigation(page)).toContainText(account.displayName);
   await signOut(page);
   return account;
+}
+
+export async function signInAs(page: Page, email: string, nextPath: string) {
+  await submitSignIn(page, {
+    email,
+    password: seedPassword,
+    path: `/iniciar-sesion?next=${encodeURIComponent(nextPath)}`,
+  });
+  await expect(page).toHaveURL(nextPath);
 }

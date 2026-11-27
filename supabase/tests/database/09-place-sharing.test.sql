@@ -1,6 +1,6 @@
 begin;
 
-select plan(17);
+select plan(18);
 
 select tests.create_user('90000000-0000-0000-0000-000000000001', 'share-admin@test.local');
 select tests.create_user('90000000-0000-0000-0000-000000000002', 'share-moderator@test.local');
@@ -117,6 +117,19 @@ select isnt_empty(
      where name = '90000000-0000-0000-0000-000000000003/91000000-0000-0000-0000-000000000002/2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e.webp' $$,
   'a moderator cannot delete a review photo in another user''s folder'
 );
+
+insert into public.reviews (id, place_id, user_id, rating, body, is_hidden)
+values ('93000000-0000-0000-0000-000000000001', '92000000-0000-0000-0000-000000000003', '90000000-0000-0000-0000-000000000003', 2, 'Oculta', true);
+insert into public.review_photos (review_id, storage_path)
+values ('93000000-0000-0000-0000-000000000001', '90000000-0000-0000-0000-000000000003/93000000-0000-0000-0000-000000000001/4d5e6f7a-8b9c-4d0e-9f1a-2b3c4d5e6f7a.webp');
+
+select tests.authenticate_as('90000000-0000-0000-0000-000000000001');
+select isnt_empty(
+  $$ select storage_path from public.review_photos
+     where review_id = '93000000-0000-0000-0000-000000000001' $$,
+  'the admin can read the photo paths of a hidden review, so deleting its place also removes them'
+);
+select tests.clear_authentication();
 
 insert into public.places (name, category, address, slug)
 values ('Insertado Por Postgres', 'other', 'Calle 8', 'slug-elegido');

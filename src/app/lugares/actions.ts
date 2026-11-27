@@ -16,7 +16,13 @@ import {
   placeFormSchema,
   placeIdSchema,
 } from "@/lib/places/schemas";
+import { reviewPhotoBucket } from "@/lib/reviews/config";
+import { removeReviewPhotoFiles } from "@/lib/reviews/photo-storage";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+type SupabaseServerClient = Awaited<
+  ReturnType<typeof createSupabaseServerClient>
+>;
 
 const notAllowedState: FormState = {
   status: "error",
@@ -45,6 +51,17 @@ function parsePlaceForm(formData: FormData) {
 
 function toPlaceRow({ mapsUrl, ...place }: PlaceForm) {
   return { ...place, maps_url: mapsUrl };
+}
+
+async function readPlacePhotoPaths(
+  supabase: SupabaseServerClient,
+  placeId: string,
+) {
+  const { data, error } = await supabase
+    .from("review_photos")
+    .select("storage_path, review:reviews!inner(place_id)")
+    .eq("review.place_id", placeId);
+  return error ? null : data.map((photo) => photo.storage_path);
 }
 
 export async function createPlace(
@@ -121,6 +138,16 @@ export async function deletePlace(placeId: string): Promise<FormState> {
   }
 
   const supabase = await createSupabaseServerClient();
+  const photoPaths = await readPlacePhotoPaths(supabase, placeId);
+  if (!photoPaths) {
+    logger.warn("place.save_failed", {
+      userId,
+      placeId,
+      reason: "photo_read_failed",
+    });
+    return saveFailedState;
+  }
+
   const { error } = await supabase
     .from("places")
     .delete()
@@ -134,6 +161,18 @@ export async function deletePlace(placeId: string): Promise<FormState> {
       reason: error.code,
     });
     return saveFailedState;
+  }
+
+  const removalError = await removeReviewPhotoFiles(
+    supabase.storage.from(reviewPhotoBucket),
+    photoPaths,
+  );
+  if (removalError) {
+    logger.warn("place.save_failed", {
+      userId,
+      placeId,
+      reason: "photo_delete_failed",
+    });
   }
 
   logger.info("place.deleted", { userId, placeId });
