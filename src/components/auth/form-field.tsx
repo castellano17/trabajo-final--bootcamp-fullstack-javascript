@@ -1,4 +1,6 @@
-import type { ComponentProps } from "react";
+"use client";
+
+import { type ComponentProps, useId } from "react";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,14 +17,15 @@ export function FormField({
   errors,
   ...inputProps
 }: FormFieldProps) {
-  const errorId = `${name}-error`;
+  const fieldId = useId();
+  const errorId = `${fieldId}-error`;
   const hasErrors = Boolean(errors?.length);
 
   return (
     <div className="grid gap-2">
-      <Label htmlFor={name}>{label}</Label>
+      <Label htmlFor={fieldId}>{label}</Label>
       <Input
-        id={name}
+        id={fieldId}
         name={name}
         aria-invalid={hasErrors}
         aria-describedby={hasErrors ? errorId : undefined}

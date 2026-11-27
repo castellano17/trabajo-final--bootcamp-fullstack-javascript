@@ -21,6 +21,7 @@ import {
 } from "@/lib/auth/schemas";
 import { logger } from "@/lib/logger";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseStatelessClient } from "@/lib/supabase/stateless";
 
 export async function signUp(
   _previousState: AuthFormState,
@@ -36,7 +37,7 @@ export async function signUp(
     return validationErrorState(parsed.error);
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseStatelessClient();
   const { error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
@@ -119,7 +120,7 @@ export async function resendConfirmation(
     return validationErrorState(parsed.error);
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseStatelessClient();
   const { error } = await supabase.auth.resend({
     type: "signup",
     email: parsed.data.email,
@@ -150,7 +151,7 @@ export async function requestPasswordReset(
     return validationErrorState(parsed.error);
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseStatelessClient();
   const { error } = await supabase.auth.resetPasswordForEmail(
     parsed.data.email,
     {
