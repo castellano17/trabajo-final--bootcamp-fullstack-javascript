@@ -14,6 +14,10 @@ concurrency:
 
 env:
   NEXT_TELEMETRY_DISABLED: 1
+  NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:55321
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_build_only_placeholder
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+  SUPABASE_AUTH_CAPTCHA_SECRET: 1x0000000000000000000000000000000AA
 
 jobs:
   lint:
@@ -62,6 +66,16 @@ jobs:
       - name: Install Chromium system dependencies
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: pnpm exec playwright install-deps chromium
+
+      - name: Start Supabase
+        run: >-
+          pnpm exec supabase start
+          -x realtime,storage-api,imgproxy,studio,edge-runtime,logflare,vector,supavisor,postgres-meta
+
+      - name: Use the local Supabase publishable key
+        run: |
+          publishable_key=$(pnpm exec supabase status -o env | sed -n 's/^PUBLISHABLE_KEY="\(.*\)"$/\1/p')
+          echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$publishable_key" >> "$GITHUB_ENV"
 
       - run: pnpm test:e2e
 
