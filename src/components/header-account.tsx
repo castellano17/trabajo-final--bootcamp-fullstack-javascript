@@ -15,7 +15,7 @@ export async function HeaderAccount() {
         <Button asChild variant="ghost" size="sm">
           <Link href="/iniciar-sesion">Iniciar sesión</Link>
         </Button>
-        <Button asChild size="sm">
+        <Button asChild size="sm" className="max-sm:hidden">
           <Link href="/registro">Registrarse</Link>
         </Button>
       </>
@@ -33,7 +33,9 @@ export async function HeaderAccount() {
           avatarUrl={currentUser.avatarUrl}
           size="sm"
         />
-        <span className="max-w-40 truncate">{currentUser.displayName}</span>
+        <span className="max-w-40 truncate max-sm:hidden">
+          {currentUser.displayName}
+        </span>
       </Link>
       <form action={signOut}>
         <SignOutButton />
