@@ -9,7 +9,7 @@ import {
 
 import { type FormState, initialFormState } from "@/lib/forms/form-state";
 
-type FormAction = (
+export type FormAction = (
   previousState: FormState,
   formData: FormData,
 ) => Promise<FormState>;

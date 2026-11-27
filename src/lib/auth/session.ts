@@ -1,4 +1,6 @@
-import { avatarBucket } from "@/lib/profile/avatar-config";
+import { cache } from "react";
+
+import { avatarPublicUrl } from "@/lib/profile/avatar-url";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
 
@@ -9,7 +11,7 @@ export type CurrentUser = {
   role: Database["public"]["Enums"]["user_role"];
 };
 
-export async function getCurrentUser(): Promise<CurrentUser | null> {
+export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.auth.getClaims();
   const userId = data?.claims.sub;
@@ -26,15 +28,14 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     return null;
   }
 
-  const avatarUrl = profile.avatar_url
-    ? supabase.storage.from(avatarBucket).getPublicUrl(profile.avatar_url).data
-        .publicUrl
-    : null;
-
   return {
     id: userId,
     displayName: profile.display_name,
-    avatarUrl,
+    avatarUrl: avatarPublicUrl(supabase, profile.avatar_url),
     role: profile.role,
   };
+});
+
+export function isAdmin(currentUser: CurrentUser | null): boolean {
+  return currentUser?.role === "admin";
 }
