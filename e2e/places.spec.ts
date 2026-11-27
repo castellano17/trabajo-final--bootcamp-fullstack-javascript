@@ -5,8 +5,8 @@ import { readCspViolations, trackCspViolations } from "./support/csp";
 import { uniquePlaceName } from "./support/places";
 
 const seedPassword = "password123";
-const tacosElGueroPath = "/lugares/b0000000-0000-0000-0000-000000000001";
-const carnitasPath = "/lugares/b0000000-0000-0000-0000-000000000004";
+const tacosElGueroPath = "/lugares/tacos-el-guero";
+const carnitasPath = "/lugares/carnitas-michoacan";
 const notFoundText = "No encontramos esta página";
 const emptyFiltersText = "No encontramos taquerías con esos filtros.";
 
@@ -159,7 +159,7 @@ test.describe("place page", () => {
   });
 
   for (const invalidPath of [
-    "/lugares/tacos-el-guero",
+    "/lugares/no-existe",
     "/lugares/00000000-0000-0000-0000-000000000000",
   ]) {
     test(`${invalidPath} shows the not found page`, async ({ page }) => {
@@ -173,19 +173,20 @@ test.describe("place page", () => {
 
 test.describe("rating summary and security", () => {
   async function ratingRows(page: Page) {
-    return page
+    const rows = page
       .getByRole("list", { name: "Calificaciones por puntaje" })
-      .getByRole("listitem")
-      .evaluateAll((rows) =>
-        rows.map((row) => {
-          const bar = row.querySelector('[role="progressbar"]');
-          return {
-            label: bar?.getAttribute("aria-label"),
-            percentage: bar?.getAttribute("aria-valuenow"),
-            count: row.lastElementChild?.textContent,
-          };
-        }),
-      );
+      .getByRole("listitem");
+    await expect(rows).toHaveCount(5);
+    return rows.evaluateAll((rowElements) =>
+      rowElements.map((row) => {
+        const bar = row.querySelector('[role="progressbar"]');
+        return {
+          label: bar?.getAttribute("aria-label"),
+          percentage: bar?.getAttribute("aria-valuenow"),
+          count: row.lastElementChild?.textContent,
+        };
+      }),
+    );
   }
 
   test("the rating summary counts the visible reviews of each score", async ({
@@ -284,7 +285,7 @@ test.describe("place management", () => {
     await page.getByLabel("Dirección").fill("Calle de Prueba 1");
     await page.getByLabel("Descripción").fill("Creado por el test e2e.");
     await page.getByRole("button", { name: "Crear lugar" }).click();
-    await expect(page).toHaveURL(/\/lugares\/[0-9a-f-]{36}$/);
+    await expect(page).toHaveURL(/\/lugares\/zz-prueba-[a-z0-9-]+$/);
     const placePath = new URL(page.url()).pathname;
     await expect(
       page.getByRole("heading", { level: 1, name: placeName }),

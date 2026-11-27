@@ -1,6 +1,6 @@
 "use client";
 
-import { deleteReview } from "@/app/lugares/[id]/resena/actions";
+import { deleteReview } from "@/app/lugares/[slug]/resena/actions";
 import { DeleteConfirmDialog } from "@/components/forms/delete-confirm-dialog";
 
 export function DeleteReviewDialog({ placeId }: { placeId: string }) {

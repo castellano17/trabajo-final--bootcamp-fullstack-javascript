@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 
 import { updatePlace } from "@/app/lugares/actions";
 import { PlaceForm } from "@/components/places/place-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireAdminPage } from "@/lib/auth/admin-page";
-import { getPlace } from "@/lib/places/queries";
-import { placeIdSchema } from "@/lib/places/schemas";
+import { placeEditPath } from "@/lib/places/paths";
+import { findPlaceForRoute } from "@/lib/places/place-route";
 
 export const metadata: Metadata = {
   title: "Editar lugar · ReseñIt",
@@ -14,13 +13,9 @@ export const metadata: Metadata = {
 
 export default async function EditPlacePage({
   params,
-}: PageProps<"/lugares/[id]/editar">) {
-  const { id } = await params;
-  await requireAdminPage(`/lugares/${id}/editar`);
-  const place = placeIdSchema.safeParse(id).success ? await getPlace(id) : null;
-  if (!place) {
-    notFound();
-  }
+}: PageProps<"/lugares/[slug]/editar">) {
+  const place = await findPlaceForRoute((await params).slug, placeEditPath);
+  await requireAdminPage(placeEditPath(place.slug));
 
   return (
     <main className="mx-auto grid w-full max-w-xl flex-1 content-start gap-6 px-4 py-10">
@@ -35,6 +30,7 @@ export default async function EditPlacePage({
               category: place.category,
               address: place.address,
               description: place.description,
+              mapsUrl: place.maps_url,
             }}
           />
         </CardContent>

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { PlaceAdminActions } from "@/components/places/place-admin-actions";
@@ -8,31 +7,49 @@ import {
   PlaceReviews,
   PlaceReviewsSkeleton,
 } from "@/components/places/place-reviews";
+import { SharePlaceDialog } from "@/components/places/share-place-dialog";
 import { HiddenReviewNotice } from "@/components/reviews/hidden-review-notice";
 import { PlaceReviewActions } from "@/components/reviews/place-review-actions";
 import { getCurrentUser, isAdmin } from "@/lib/auth/session";
-import { getPlace } from "@/lib/places/queries";
-import { placeIdSchema } from "@/lib/places/schemas";
+import { placePath, placeQrPath, placeUrl } from "@/lib/places/paths";
+import { findPlaceForRoute } from "@/lib/places/place-route";
+import { getPlaceBySlug } from "@/lib/places/queries";
+import { placeSlugSchema } from "@/lib/places/schemas";
 import { getOwnReview } from "@/lib/reviews/queries";
-
-async function findPlaceOrNull(id: string) {
-  return placeIdSchema.safeParse(id).success ? getPlace(id) : null;
-}
+import { currentSiteOrigin } from "@/lib/site-origin";
 
 export async function generateMetadata({
   params,
-}: PageProps<"/lugares/[id]">): Promise<Metadata> {
-  const place = await findPlaceOrNull((await params).id);
-  return place ? { title: `${place.name} · ReseñIt` } : {};
+}: PageProps<"/lugares/[slug]">): Promise<Metadata> {
+  const { slug } = await params;
+  const place = placeSlugSchema.safeParse(slug).success
+    ? await getPlaceBySlug(slug)
+    : null;
+  if (!place) {
+    return {};
+  }
+
+  const url = placeUrl(await currentSiteOrigin(), place.slug);
+  const description = place.description || place.address;
+  return {
+    title: `${place.name} · ReseñIt`,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "website",
+      siteName: "ReseñIt",
+      locale: "es_MX",
+      title: place.name,
+      description,
+      url,
+    },
+  };
 }
 
 export default async function PlacePage({
   params,
-}: PageProps<"/lugares/[id]">) {
-  const place = await findPlaceOrNull((await params).id);
-  if (!place) {
-    notFound();
-  }
+}: PageProps<"/lugares/[slug]">) {
+  const place = await findPlaceForRoute((await params).slug, placePath);
   const currentUser = await getCurrentUser();
   const ownReview = currentUser ? await getOwnReview(place.id) : null;
 
@@ -40,6 +57,14 @@ export default async function PlacePage({
     <main className="mx-auto grid w-full max-w-6xl flex-1 content-start gap-10 px-4 py-10">
       <PlaceDetails
         place={place}
+        shareAction={
+          <SharePlaceDialog
+            placeName={place.name}
+            placeUrl={placeUrl(await currentSiteOrigin(), place.slug)}
+            qrPath={placeQrPath(place.slug)}
+            qrFileName={`qr-${place.slug}.png`}
+          />
+        }
         adminActions={
           isAdmin(currentUser) ? <PlaceAdminActions place={place} /> : null
         }
@@ -52,7 +77,11 @@ export default async function PlacePage({
           >
             Reseñas
           </h2>
-          <PlaceReviewActions placeId={place.id} ownReview={ownReview} />
+          <PlaceReviewActions
+            placeId={place.id}
+            placeSlug={place.slug}
+            ownReview={ownReview}
+          />
         </div>
         {ownReview?.isHidden && <HiddenReviewNotice />}
         <Suspense fallback={<PlaceReviewsSkeleton />}>

@@ -11,7 +11,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 const rangeNotSatisfiableCode = "PGRST103";
 
 const placeSummaryColumns =
-  "id, name, category, address, average_rating, review_count";
+  "id, slug, name, category, address, average_rating, review_count";
 
 const placeRankingOrder = [
   { column: "average_rating", ascending: false },
@@ -74,14 +74,14 @@ export async function listTopRatedPlaces(): Promise<PlaceSummary[]> {
   return data;
 }
 
-export const getPlace = cache(async (placeId: string) => {
+export const getPlaceBySlug = cache(async (slug: string) => {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("places")
     .select(
-      "id, name, category, description, address, average_rating, review_count",
+      "id, slug, name, category, description, address, maps_url, average_rating, review_count",
     )
-    .eq("id", placeId)
+    .eq("slug", slug)
     .maybeSingle();
   if (error) {
     throw new Error(`Could not load place: ${error.code}`);
@@ -89,7 +89,24 @@ export const getPlace = cache(async (placeId: string) => {
   return data;
 });
 
-export type PlaceDetail = NonNullable<Awaited<ReturnType<typeof getPlace>>>;
+export type PlaceDetail = NonNullable<
+  Awaited<ReturnType<typeof getPlaceBySlug>>
+>;
+
+export const getPlaceSlug = cache(
+  async (placeId: string): Promise<string | null> => {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("places")
+      .select("slug")
+      .eq("id", placeId)
+      .maybeSingle();
+    if (error) {
+      throw new Error(`Could not load place slug: ${error.code}`);
+    }
+    return data?.slug ?? null;
+  },
+);
 
 export async function listPlaceReviews(placeId: string) {
   const supabase = await createSupabaseServerClient();

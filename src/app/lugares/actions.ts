@@ -10,8 +10,19 @@ import {
   validationErrorState,
 } from "@/lib/forms/form-state";
 import { logger } from "@/lib/logger";
-import { placeFormSchema, placeIdSchema } from "@/lib/places/schemas";
+import { placePath } from "@/lib/places/paths";
+import {
+  type PlaceForm,
+  placeFormSchema,
+  placeIdSchema,
+} from "@/lib/places/schemas";
+import { reviewPhotoBucket } from "@/lib/reviews/config";
+import { removeReviewPhotoFiles } from "@/lib/reviews/photo-storage";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+type SupabaseServerClient = Awaited<
+  ReturnType<typeof createSupabaseServerClient>
+>;
 
 const notAllowedState: FormState = {
   status: "error",
@@ -34,7 +45,23 @@ function parsePlaceForm(formData: FormData) {
     category: readFormField(formData, "category"),
     address: readFormField(formData, "address"),
     description: readFormField(formData, "description"),
+    mapsUrl: readFormField(formData, "mapsUrl"),
   });
+}
+
+function toPlaceRow({ mapsUrl, ...place }: PlaceForm) {
+  return { ...place, maps_url: mapsUrl };
+}
+
+async function readPlacePhotoPaths(
+  supabase: SupabaseServerClient,
+  placeId: string,
+) {
+  const { data, error } = await supabase
+    .from("review_photos")
+    .select("storage_path, review:reviews!inner(place_id)")
+    .eq("review.place_id", placeId);
+  return error ? null : data.map((photo) => photo.storage_path);
 }
 
 export async function createPlace(
@@ -54,8 +81,8 @@ export async function createPlace(
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("places")
-    .insert(parsed.data)
-    .select("id")
+    .insert(toPlaceRow(parsed.data))
+    .select("id, slug")
     .single();
   if (error) {
     logger.warn("place.save_failed", { userId, reason: error.code });
@@ -64,7 +91,7 @@ export async function createPlace(
 
   logger.info("place.created", { userId, placeId: data.id });
   revalidatePath("/lugares");
-  redirect(`/lugares/${data.id}`);
+  redirect(placePath(data.slug));
 }
 
 export async function updatePlace(
@@ -83,11 +110,11 @@ export async function updatePlace(
   }
 
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("places")
-    .update(parsed.data)
+    .update(toPlaceRow(parsed.data))
     .eq("id", placeId)
-    .select("id")
+    .select("slug")
     .single();
   if (error) {
     logger.warn("place.save_failed", {
@@ -100,8 +127,8 @@ export async function updatePlace(
 
   logger.info("place.updated", { userId, placeId });
   revalidatePath("/lugares");
-  revalidatePath(`/lugares/${placeId}`);
-  redirect(`/lugares/${placeId}`);
+  revalidatePath(placePath(data.slug));
+  redirect(placePath(data.slug));
 }
 
 export async function deletePlace(placeId: string): Promise<FormState> {
@@ -111,6 +138,16 @@ export async function deletePlace(placeId: string): Promise<FormState> {
   }
 
   const supabase = await createSupabaseServerClient();
+  const photoPaths = await readPlacePhotoPaths(supabase, placeId);
+  if (!photoPaths) {
+    logger.warn("place.save_failed", {
+      userId,
+      placeId,
+      reason: "photo_read_failed",
+    });
+    return saveFailedState;
+  }
+
   const { error } = await supabase
     .from("places")
     .delete()
@@ -124,6 +161,18 @@ export async function deletePlace(placeId: string): Promise<FormState> {
       reason: error.code,
     });
     return saveFailedState;
+  }
+
+  const removalError = await removeReviewPhotoFiles(
+    supabase.storage.from(reviewPhotoBucket),
+    photoPaths,
+  );
+  if (removalError) {
+    logger.warn("place.save_failed", {
+      userId,
+      placeId,
+      reason: "photo_delete_failed",
+    });
   }
 
   logger.info("place.deleted", { userId, placeId });

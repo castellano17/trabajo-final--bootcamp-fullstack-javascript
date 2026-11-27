@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 
-import { saveReview } from "@/app/lugares/[id]/resena/actions";
+import { saveReview } from "@/app/lugares/[slug]/resena/actions";
 import { HiddenReviewNotice } from "@/components/reviews/hidden-review-notice";
 import { ReviewForm } from "@/components/reviews/review-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getPlace } from "@/lib/places/queries";
-import { placeIdSchema } from "@/lib/places/schemas";
+import { placePath, placeReviewPath } from "@/lib/places/paths";
+import { findPlaceForRoute } from "@/lib/places/place-route";
 import { getOwnReview } from "@/lib/reviews/queries";
 
 export const metadata: Metadata = {
@@ -16,16 +16,12 @@ export const metadata: Metadata = {
 
 export default async function ReviewPage({
   params,
-}: PageProps<"/lugares/[id]/resena">) {
-  const { id } = await params;
-  const place = placeIdSchema.safeParse(id).success ? await getPlace(id) : null;
-  if (!place) {
-    notFound();
-  }
+}: PageProps<"/lugares/[slug]/resena">) {
+  const place = await findPlaceForRoute((await params).slug, placeReviewPath);
   const currentUser = await getCurrentUser();
   if (!currentUser) {
     redirect(
-      `/iniciar-sesion?next=${encodeURIComponent(`/lugares/${place.id}/resena`)}`,
+      `/iniciar-sesion?next=${encodeURIComponent(placeReviewPath(place.slug))}`,
     );
   }
   const ownReview = await getOwnReview(place.id);
@@ -43,7 +39,7 @@ export default async function ReviewPage({
         <CardContent>
           <ReviewForm
             action={saveReview.bind(null, place.id, ownReview?.id ?? null)}
-            cancelHref={`/lugares/${place.id}`}
+            cancelHref={placePath(place.slug)}
             review={
               ownReview
                 ? {

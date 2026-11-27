@@ -82,7 +82,7 @@ Vercel (proyecto → **Settings → Environment Variables**): crear las tres var
 ## Lugares
 
 - `/lugares` lista las taquerías de 12 en 12, ordenadas por mejor promedio, luego por más reseñas y luego por nombre. Se pueden filtrar por categoría y buscar por nombre; los filtros viven en la URL (`?categoria=birria&q=don&pagina=2`), así que un enlace filtrado se puede compartir y funciona sin JavaScript.
-- `/lugares/<id>` muestra la ficha del lugar de inmediato, y las reseñas visibles llegan después con `Suspense` mientras se ve un esqueleto de carga. Las reseñas ocultas por moderación no aparecen para nadie en esta página.
+- `/lugares/<slug>` (por ejemplo `/lugares/tacos-el-guero`) muestra la ficha del lugar de inmediato, y las reseñas visibles llegan después con `Suspense` mientras se ve un esqueleto de carga. Las reseñas ocultas por moderación no aparecen para nadie en esta página.
 
 | Acción                                 | Visitante | Usuario | Moderador | Admin |
 | -------------------------------------- | --------- | ------- | --------- | ----- |
@@ -91,15 +91,15 @@ Vercel (proyecto → **Settings → Environment Variables**): crear las tres var
 
 Cómo se protege la gestión:
 
-- Los botones "Nuevo lugar", "Editar" y "Borrar" solo se muestran al admin, y los formularios de `/lugares/nuevo` y `/lugares/<id>/editar` responden 404 a cualquier otra sesión.
+- Los botones "Nuevo lugar", "Editar" y "Borrar" solo se muestran al admin, y los formularios de `/lugares/nuevo` y `/lugares/<slug>/editar` responden 404 a cualquier otra sesión.
 - Las Server Actions comprueban que quien llama sea admin antes de tocar la base, y las políticas de RLS de `places` vuelven a exigirlo en cada escritura.
-- Borrar un lugar borra también sus reseñas. El diálogo de confirmación dice cuántas se van a borrar, incluidas las ocultas.
+- Borrar un lugar borra también sus reseñas y los archivos de sus fotos en el bucket. El diálogo de confirmación dice cuántas reseñas se van a borrar, incluidas las ocultas.
 
 En producción no hay lugares al principio: el admin los crea desde `/lugares/nuevo` (ver "Primer administrador en producción"). En local, el seed trae 15 taquerías y una reseña oculta.
 
 ## Reseñas
 
-- Desde la página del lugar, "Escribir reseña" lleva a `/lugares/<id>/resena`. Sin sesión, primero pasa por `/iniciar-sesion` y después vuelve al formulario. Si ya tienes reseña de ese lugar, aparecen "Editar tu reseña" y "Borrar", y el formulario llega con tu reseña cargada.
+- Desde la página del lugar, "Escribir reseña" lleva a `/lugares/<slug>/resena`. Sin sesión, primero pasa por `/iniciar-sesion` y después vuelve al formulario. Si ya tienes reseña de ese lugar, aparecen "Editar tu reseña" y "Borrar", y el formulario llega con tu reseña cargada.
 - Cada usuario tiene una sola reseña por lugar: puntaje de 1 a 5, texto de 1 a 2000 caracteres y hasta 3 fotos. Si otra pestaña ya la publicó, el formulario avisa "Ya escribiste una reseña de este lugar." en lugar de sobrescribirla.
 - El promedio y la cantidad de reseñas los recalcula un trigger de la base. Al publicar, editar o borrar, se refrescan la página del lugar, el listado y el inicio.
 - Si un moderador ocultó tu reseña, la página del lugar te lo avisa. Puedes editarla o borrarla, pero sigue oculta.
@@ -124,6 +124,16 @@ Cómo se protegen las fotos:
 - La política de `review_photos` exige que la reseña sea tuya y que la ruta empiece con `<tu id>/<id de tu reseña>/`, y una restricción de la base valida su formato. Nadie puede registrar como suya la foto de otra persona.
 - El bucket y sus políticas los crea la migración `create_review_photos_bucket`. En producción los aplica `deploy-db`.
 
+## Compartir un lugar
+
+- Cada lugar tiene una URL corta y legible, como `/lugares/tacos-el-guero`. La base genera el slug a partir del nombre al crear el lugar: minúsculas, sin acentos y con guiones. Es único (`-2`, `-3`…), `nuevo` está reservado y nunca cambia, ni al renombrar el lugar, así los QR impresos siguen funcionando.
+- Los enlaces viejos con el id (`/lugares/<uuid>`, `/lugares/<uuid>/resena` y `/lugares/<uuid>/editar`) redirigen de forma permanente a la URL con slug.
+- "Compartir" aparece en la página de cada lugar, con o sin sesión. Abre un diálogo con el QR, la URL corta, "Descargar QR" (`qr-<slug>.png`), "Copiar enlace" y, en los navegadores que pueden, "Compartir", que abre el menú del sistema con la imagen y el enlace.
+- El QR lo genera el servidor en `/lugares/<slug>/qr` con la librería `qrcode`: un PNG negro sobre blanco que lleva a la página del lugar. En producción usa el dominio principal (`VERCEL_PROJECT_PRODUCTION_URL`, una variable de sistema de Vercel), aunque la página se abra desde la URL de un despliegue. En local y en preview usa el dominio de la petición, así que **solo se imprimen los QR de producción**: un QR de preview deja de funcionar cuando se borra ese despliegue.
+- Al pegar el enlace en WhatsApp o en redes, la vista previa muestra el nombre del lugar y su descripción, o su dirección si no tiene descripción (Open Graph).
+- La dirección abre Google Maps en una pestaña nueva. Si el admin pegó un "Enlace de Google Maps" en el formulario, abre ese pin; si no, busca la dirección. Solo se aceptan enlaces `https` de Google Maps (`maps.app.goo.gl`, `goo.gl/maps`, `google.com/maps` y `maps.google.com`), y la base vuelve a exigirlo.
+- Las columnas `slug` y `maps_url` las crea la migración `add_place_slug_and_maps_url`. La migración `allow_admin_delete_review_photo_files` deja que el admin borre las fotos de reseñas ajenas, que es lo que hace al borrar un lugar.
+
 ## Logs
 
 La app escribe una línea JSON por evento de autenticación, de perfil, de gestión de lugares y de reseñas en la salida estándar, que Vercel muestra en **Logs**. Cada línea tiene `level`, `event`, `timestamp` y contexto como `userId` o `reason`:
@@ -137,23 +147,23 @@ La app escribe una línea JSON por evento de autenticación, de perfil, de gesti
 }
 ```
 
-| Evento                                                                                 | Nivel       | Para qué sirve                                                                                                               |
-| -------------------------------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `auth.sign_up.requested`, `auth.sign_up.confirmed`                                     | info        | Medir cuántos registros llegan a confirmarse                                                                                 |
-| `auth.sign_in.succeeded`, `auth.sign_out`                                              | info        | Auditar el acceso de cada usuario                                                                                            |
-| `auth.sign_in.failed`                                                                  | warn        | Detectar intentos de fuerza bruta (`invalid_credentials`) o cuentas sin confirmar                                            |
-| `auth.sign_up.failed`, `auth.confirmation.resend_failed`, `auth.password_reset.failed` | warn        | Detectar CAPTCHA fallidos o límites de envío alcanzados                                                                      |
-| `auth.confirmation.resent`, `auth.password_reset.requested`                            | info        | Seguir los envíos de correo cuando alguien dice que no le llegó                                                              |
-| `auth.password_reset.verified`, `auth.password.updated`, `auth.password.update_failed` | info / warn | Auditar los cambios de contraseña                                                                                            |
-| `auth.confirm.failed`                                                                  | warn        | Detectar enlaces vencidos o manipulados (`otp_expired`, `malformed_link`)                                                    |
-| `profile.display_name.updated`, `profile.avatar.updated`, `profile.avatar.removed`     | info        | Auditar los cambios de perfil                                                                                                |
-| `profile.avatar.rejected`                                                              | warn        | Detectar archivos que no son imágenes (`unsupported_type`) o demasiado grandes (`too_large`)                                 |
-| `profile.update.failed`                                                                | warn        | Detectar fallos al guardar en la base o en Storage, incluido un avatar anterior que no se pudo borrar                        |
-| `place.created`, `place.updated`, `place.deleted`                                      | info        | Auditar qué admin cambió el catálogo de lugares y cuándo                                                                     |
-| `place.save_failed`                                                                    | warn        | Detectar fallos al guardar o borrar un lugar                                                                                 |
-| `review.created`, `review.updated`, `review.deleted`                                   | info        | Auditar quién publicó, cambió o borró cada reseña                                                                            |
-| `review.photo.rejected`                                                                | warn        | Detectar fotos que no son imágenes (`unsupported_type`), demasiado grandes (`too_large`) o de más (`too_many`)               |
-| `review.save_failed`, `review.delete_failed`                                           | warn        | Detectar fallos al guardar o borrar una reseña, como una reseña duplicada (`23505`) o una foto que no se pudo subir o borrar |
+| Evento                                                                                 | Nivel       | Para qué sirve                                                                                                                                              |
+| -------------------------------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auth.sign_up.requested`, `auth.sign_up.confirmed`                                     | info        | Medir cuántos registros llegan a confirmarse                                                                                                                |
+| `auth.sign_in.succeeded`, `auth.sign_out`                                              | info        | Auditar el acceso de cada usuario                                                                                                                           |
+| `auth.sign_in.failed`                                                                  | warn        | Detectar intentos de fuerza bruta (`invalid_credentials`) o cuentas sin confirmar                                                                           |
+| `auth.sign_up.failed`, `auth.confirmation.resend_failed`, `auth.password_reset.failed` | warn        | Detectar CAPTCHA fallidos o límites de envío alcanzados                                                                                                     |
+| `auth.confirmation.resent`, `auth.password_reset.requested`                            | info        | Seguir los envíos de correo cuando alguien dice que no le llegó                                                                                             |
+| `auth.password_reset.verified`, `auth.password.updated`, `auth.password.update_failed` | info / warn | Auditar los cambios de contraseña                                                                                                                           |
+| `auth.confirm.failed`                                                                  | warn        | Detectar enlaces vencidos o manipulados (`otp_expired`, `malformed_link`)                                                                                   |
+| `profile.display_name.updated`, `profile.avatar.updated`, `profile.avatar.removed`     | info        | Auditar los cambios de perfil                                                                                                                               |
+| `profile.avatar.rejected`                                                              | warn        | Detectar archivos que no son imágenes (`unsupported_type`) o demasiado grandes (`too_large`)                                                                |
+| `profile.update.failed`                                                                | warn        | Detectar fallos al guardar en la base o en Storage, incluido un avatar anterior que no se pudo borrar                                                       |
+| `place.created`, `place.updated`, `place.deleted`                                      | info        | Auditar qué admin cambió el catálogo de lugares y cuándo                                                                                                    |
+| `place.save_failed`                                                                    | warn        | Detectar fallos al guardar o borrar un lugar, incluidas las fotos que no se pudieron leer (`photo_read_failed`) o borrar del bucket (`photo_delete_failed`) |
+| `review.created`, `review.updated`, `review.deleted`                                   | info        | Auditar quién publicó, cambió o borró cada reseña                                                                                                           |
+| `review.photo.rejected`                                                                | warn        | Detectar fotos que no son imágenes (`unsupported_type`), demasiado grandes (`too_large`) o de más (`too_many`)                                              |
+| `review.save_failed`, `review.delete_failed`                                           | warn        | Detectar fallos al guardar o borrar una reseña, como una reseña duplicada (`23505`) o una foto que no se pudo subir o borrar                                |
 
 Qué no se registra y por qué: correos, contraseñas, tokens, cookies ni nombres de archivo. El logger descarta cualquier campo cuyo nombre contenga `email`, `password`, `token`, `secret` o `cookie`, aunque se le pase por error. Así los logs sirven para investigar incidentes sin convertirse en una fuga de datos personales.
 

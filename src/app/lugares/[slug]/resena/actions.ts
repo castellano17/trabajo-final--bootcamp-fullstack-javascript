@@ -11,6 +11,8 @@ import {
 } from "@/lib/forms/form-state";
 import { detectImageType, type ImageType } from "@/lib/images/image-type";
 import { logger } from "@/lib/logger";
+import { placePath, placeReviewPath } from "@/lib/places/paths";
+import { getPlaceSlug } from "@/lib/places/queries";
 import { placeIdSchema } from "@/lib/places/schemas";
 import {
   reviewPhotoBucket,
@@ -57,13 +59,13 @@ const duplicateReviewState: FormState = {
 
 const unsupportedPhotoMessage = "Elige fotos JPEG, PNG o WebP.";
 
-async function getSignedInUser(placeId: string) {
+async function getSignedInUser(placeSlug: string) {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.auth.getClaims();
   const userId = data?.claims.sub;
   if (!userId) {
     redirect(
-      `/iniciar-sesion?next=${encodeURIComponent(`/lugares/${placeId}/resena`)}`,
+      `/iniciar-sesion?next=${encodeURIComponent(placeReviewPath(placeSlug))}`,
     );
   }
   return { supabase, userId };
@@ -299,11 +301,11 @@ async function updateReview(
   return null;
 }
 
-function refreshReviewViews(placeId: string): never {
-  revalidatePath(`/lugares/${placeId}`);
+function refreshReviewViews(placeSlug: string): never {
+  revalidatePath(placePath(placeSlug));
   revalidatePath("/lugares");
   revalidatePath("/");
-  redirect(`/lugares/${placeId}`);
+  redirect(placePath(placeSlug));
 }
 
 export async function saveReview(
@@ -312,10 +314,13 @@ export async function saveReview(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  if (!placeIdSchema.safeParse(placeId).success) {
+  const placeSlug = placeIdSchema.safeParse(placeId).success
+    ? await getPlaceSlug(placeId)
+    : null;
+  if (!placeSlug) {
     return saveFailedState;
   }
-  const { supabase, userId } = await getSignedInUser(placeId);
+  const { supabase, userId } = await getSignedInUser(placeSlug);
   const writer: ReviewWriter = { supabase, userId, placeId };
 
   const parsed = parseReviewForm(formData);
@@ -360,7 +365,7 @@ export async function saveReview(
     return errorState;
   }
 
-  refreshReviewViews(placeId);
+  refreshReviewViews(placeSlug);
 }
 
 const deleteFailedState: FormState = {
@@ -369,10 +374,13 @@ const deleteFailedState: FormState = {
 };
 
 export async function deleteReview(placeId: string): Promise<FormState> {
-  if (!placeIdSchema.safeParse(placeId).success) {
+  const placeSlug = placeIdSchema.safeParse(placeId).success
+    ? await getPlaceSlug(placeId)
+    : null;
+  if (!placeSlug) {
     return deleteFailedState;
   }
-  const { supabase, userId } = await getSignedInUser(placeId);
+  const { supabase, userId } = await getSignedInUser(placeSlug);
 
   const { data: review, error: readError } = await supabase
     .from("reviews")
@@ -417,5 +425,5 @@ export async function deleteReview(placeId: string): Promise<FormState> {
   }
 
   logger.info("review.deleted", { userId, placeId, reviewId: review.id });
-  refreshReviewViews(placeId);
+  refreshReviewViews(placeSlug);
 }

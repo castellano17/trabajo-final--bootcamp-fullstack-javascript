@@ -1,13 +1,12 @@
 import { readFileSync } from "node:fs";
-import path from "node:path";
 
 import { expect, test, type Page } from "@playwright/test";
 
-import { submitSignIn } from "./support/auth";
+import { seedPassword, signInAs, submitSignIn } from "./support/auth";
 import { readCspViolations, trackCspViolations } from "./support/csp";
 import { uniquePlaceName } from "./support/places";
+import { chooseRating, reviewPhotoFixture } from "./support/reviews";
 
-const seedPassword = "password123";
 const userEmail = "user@resenit.test";
 const moderatorEmail = "moderator@resenit.test";
 const adminEmail = "admin@resenit.test";
@@ -15,13 +14,6 @@ const moderatorId = "a0000000-0000-0000-0000-000000000002";
 const moderatorName = "Moderador Demo";
 const moderatorReviewBody = "Zz reseña de prueba: tortillas tibias.";
 const duplicateReviewMessage = "Ya escribiste una reseña de este lugar.";
-const photoFixture = path.join(
-  __dirname,
-  "..",
-  "public",
-  "images",
-  "tacos-con-limon.webp",
-);
 const moderatorPhotoUrl = new RegExp(
   `/storage/v1/object/public/review-photos/${moderatorId}/[0-9a-f-]{36}/[0-9a-f-]{36}\\.webp$`,
 );
@@ -30,27 +22,12 @@ const placeName = uniquePlaceName();
 let placePath = "";
 let reviewPath = "";
 
-async function signIn(page: Page, email: string, nextPath: string) {
-  await submitSignIn(page, {
-    email,
-    password: seedPassword,
-    path: `/iniciar-sesion?next=${encodeURIComponent(nextPath)}`,
-  });
-  await expect(page).toHaveURL(nextPath);
-}
-
-async function chooseRating(page: Page, starCount: string) {
-  const ratingRadio = page.getByRole("radio", { name: starCount });
-  await page.locator("label").filter({ has: ratingRadio }).click();
-  await expect(ratingRadio).toBeChecked();
-}
-
 function photoInput(page: Page) {
   return page.getByLabel("Elegir fotos");
 }
 
 function photoFixtureCopies(count: number) {
-  const buffer = readFileSync(photoFixture);
+  const buffer = readFileSync(reviewPhotoFixture);
   return Array.from({ length: count }, (_, index) => ({
     name: `foto-${index + 1}.webp`,
     mimeType: "image/webp",
@@ -118,12 +95,12 @@ test.describe("reviews", () => {
 
   test.beforeAll(async ({ browser }) => {
     const adminPage = await browser.newPage();
-    await signIn(adminPage, adminEmail, "/lugares/nuevo");
+    await signInAs(adminPage, adminEmail, "/lugares/nuevo");
     await adminPage.getByLabel("Nombre").fill(placeName);
     await adminPage.getByLabel("Categoría").selectOption("guisado");
     await adminPage.getByLabel("Dirección").fill("Calle de Prueba 8");
     await adminPage.getByRole("button", { name: "Crear lugar" }).click();
-    await expect(adminPage).toHaveURL(/\/lugares\/[0-9a-f-]{36}$/);
+    await expect(adminPage).toHaveURL(/\/lugares\/zz-prueba-[a-z0-9-]+$/);
     placePath = new URL(adminPage.url()).pathname;
     reviewPath = `${placePath}/resena`;
     await adminPage.close();
@@ -131,7 +108,7 @@ test.describe("reviews", () => {
 
   test.afterAll(async ({ browser }) => {
     const adminPage = await browser.newPage();
-    await signIn(adminPage, adminEmail, placePath);
+    await signInAs(adminPage, adminEmail, placePath);
     await adminPage
       .getByRole("button", { name: "Borrar", exact: true })
       .click();
@@ -147,7 +124,7 @@ test.describe("reviews", () => {
     page,
     context,
   }) => {
-    await signIn(page, userEmail, reviewPath);
+    await signInAs(page, userEmail, reviewPath);
     const secondTab = await context.newPage();
     await secondTab.goto(reviewPath);
 
@@ -197,11 +174,11 @@ test.describe("reviews", () => {
     page,
   }) => {
     await expectRatingSummary(page, { rating: "1.0", reviewCount: "1 reseña" });
-    await signIn(page, moderatorEmail, reviewPath);
+    await signInAs(page, moderatorEmail, reviewPath);
 
     await chooseRating(page, "2 estrellas");
     await page.getByLabel("Tu reseña").fill(moderatorReviewBody);
-    await photoInput(page).setInputFiles(photoFixture);
+    await photoInput(page).setInputFiles(reviewPhotoFixture);
     await expect(page.getByAltText("Foto 1 de tu reseña")).toBeVisible();
     await page.getByRole("button", { name: "Publicar reseña" }).click();
 
@@ -223,7 +200,7 @@ test.describe("reviews", () => {
   test("editing removes a photo from the card and the bucket and changes the rating", async ({
     page,
   }) => {
-    await signIn(page, moderatorEmail, placePath);
+    await signInAs(page, moderatorEmail, placePath);
     const [removedPhotoUrl] = await moderatorPhotoUrls(page);
 
     await page.getByRole("link", { name: "Editar tu reseña" }).click();
@@ -233,7 +210,7 @@ test.describe("reviews", () => {
     ).toBeChecked();
     await expect(page.getByLabel("Tu reseña")).toHaveValue(moderatorReviewBody);
     await page.getByRole("button", { name: "Quitar foto 1" }).click();
-    await photoInput(page).setInputFiles(photoFixture);
+    await photoInput(page).setInputFiles(reviewPhotoFixture);
     await expect(page.getByAltText("Foto 1 de tu reseña")).toBeVisible();
     await chooseRating(page, "1 estrella");
     await page.getByRole("button", { name: "Guardar cambios" }).click();
@@ -254,7 +231,7 @@ test.describe("reviews", () => {
   test("replacing one of three photos keeps three photos and removes the replaced file", async ({
     page,
   }) => {
-    await signIn(page, moderatorEmail, reviewPath);
+    await signInAs(page, moderatorEmail, reviewPath);
     await photoInput(page).setInputFiles(photoFixtureCopies(2));
     await expect(page.getByAltText("Foto 3 de tu reseña")).toBeVisible();
     await page.getByRole("button", { name: "Guardar cambios" }).click();
@@ -267,7 +244,7 @@ test.describe("reviews", () => {
       "";
     expect(replacedPhotoUrl).toMatch(moderatorPhotoUrl);
     await page.getByRole("button", { name: "Quitar foto 1" }).click();
-    await photoInput(page).setInputFiles(photoFixture);
+    await photoInput(page).setInputFiles(reviewPhotoFixture);
     await expect(page.getByAltText("Foto 3 de tu reseña")).toBeVisible();
     await page.getByRole("button", { name: "Guardar cambios" }).click();
 
@@ -280,7 +257,7 @@ test.describe("reviews", () => {
   test("the form rejects a missing rating, an empty text, a fourth photo and a file that is not an image", async ({
     page,
   }) => {
-    await signIn(page, adminEmail, reviewPath);
+    await signInAs(page, adminEmail, reviewPath);
     const publishButton = page.getByRole("button", { name: "Publicar reseña" });
 
     await page.getByLabel("Tu reseña").fill("Zz reseña de prueba sin puntaje.");
@@ -322,7 +299,7 @@ test.describe("reviews", () => {
   test("deleting from the place page asks for confirmation and removes the review, its photo and its rating", async ({
     page,
   }) => {
-    await signIn(page, moderatorEmail, placePath);
+    await signInAs(page, moderatorEmail, placePath);
     const photoUrls = await moderatorPhotoUrls(page);
 
     await page.getByRole("button", { name: "Borrar tu reseña" }).click();
@@ -348,9 +325,9 @@ test.describe("reviews", () => {
     page,
   }) => {
     await trackCspViolations(page);
-    await signIn(page, userEmail, reviewPath);
+    await signInAs(page, userEmail, reviewPath);
 
-    await photoInput(page).setInputFiles(photoFixture);
+    await photoInput(page).setInputFiles(reviewPhotoFixture);
     await expect(page.getByAltText("Foto 1 de tu reseña")).toBeVisible();
 
     expect(await readCspViolations(page)).toEqual([]);
@@ -372,8 +349,8 @@ test.describe("review page edge cases", () => {
   test("the author of a hidden review sees the notice and no write review button", async ({
     page,
   }) => {
-    const carnitasPath = "/lugares/b0000000-0000-0000-0000-000000000004";
-    await signIn(page, userEmail, carnitasPath);
+    const carnitasPath = "/lugares/carnitas-michoacan";
+    await signInAs(page, userEmail, carnitasPath);
 
     await expect(
       page.getByText("Un moderador ocultó tu reseña."),
