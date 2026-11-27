@@ -6,9 +6,9 @@ import { signIn } from "@/app/(auth)/actions";
 import { FormField } from "@/components/auth/form-field";
 import { FormStatusMessage } from "@/components/auth/form-status-message";
 import { ResendConfirmationForm } from "@/components/auth/resend-confirmation-form";
+import { SubmitButton } from "@/components/auth/submit-button";
 import { TurnstileField } from "@/components/auth/turnstile-field";
 import { useAuthForm } from "@/components/auth/use-auth-form";
-import { Button } from "@/components/ui/button";
 
 export function SignInForm({ next }: { next: string }) {
   const [email, setEmail] = useState("");
@@ -44,9 +44,9 @@ export function SignInForm({ next }: { next: string }) {
           errors={fieldErrors.captchaToken}
         />
         <FormStatusMessage state={state} />
-        <Button type="submit" disabled={isPending}>
-          {isPending ? "Iniciando sesión…" : "Iniciar sesión"}
-        </Button>
+        <SubmitButton isPending={isPending} pendingLabel="Iniciando sesión…">
+          Iniciar sesión
+        </SubmitButton>
       </form>
       {needsConfirmation && <ResendConfirmationForm defaultEmail={email} />}
     </div>

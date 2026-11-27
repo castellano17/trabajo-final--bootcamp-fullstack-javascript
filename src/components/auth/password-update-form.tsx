@@ -3,8 +3,8 @@
 import { updatePassword } from "@/app/(auth)/actions";
 import { FormField } from "@/components/auth/form-field";
 import { FormStatusMessage } from "@/components/auth/form-status-message";
+import { SubmitButton } from "@/components/auth/submit-button";
 import { useAuthForm } from "@/components/auth/use-auth-form";
-import { Button } from "@/components/ui/button";
 
 export function PasswordUpdateForm() {
   const { state, fieldErrors, handleSubmit, isPending } =
@@ -32,9 +32,9 @@ export function PasswordUpdateForm() {
         Mínimo 8 caracteres, con mayúsculas, minúsculas y números.
       </p>
       <FormStatusMessage state={state} />
-      <Button type="submit" disabled={isPending}>
-        {isPending ? "Guardando…" : "Guardar contraseña"}
-      </Button>
+      <SubmitButton isPending={isPending} pendingLabel="Guardando…">
+        Guardar contraseña
+      </SubmitButton>
     </form>
   );
 }

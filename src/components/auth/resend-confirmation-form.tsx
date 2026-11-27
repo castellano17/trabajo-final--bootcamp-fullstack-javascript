@@ -3,9 +3,9 @@
 import { resendConfirmation } from "@/app/(auth)/actions";
 import { FormField } from "@/components/auth/form-field";
 import { FormStatusMessage } from "@/components/auth/form-status-message";
+import { SubmitButton } from "@/components/auth/submit-button";
 import { TurnstileField } from "@/components/auth/turnstile-field";
 import { useAuthForm } from "@/components/auth/use-auth-form";
-import { Button } from "@/components/ui/button";
 
 export function ResendConfirmationForm({
   defaultEmail,
@@ -36,9 +36,13 @@ export function ResendConfirmationForm({
       />
       <TurnstileField key={submissionCount} errors={fieldErrors.captchaToken} />
       <FormStatusMessage state={state} />
-      <Button type="submit" variant="secondary" disabled={isPending}>
-        {isPending ? "Enviando…" : "Reenviar correo de confirmación"}
-      </Button>
+      <SubmitButton
+        variant="secondary"
+        isPending={isPending}
+        pendingLabel="Enviando…"
+      >
+        Reenviar correo de confirmación
+      </SubmitButton>
     </form>
   );
 }

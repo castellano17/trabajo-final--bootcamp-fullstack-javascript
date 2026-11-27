@@ -3,9 +3,9 @@
 import { signUp } from "@/app/(auth)/actions";
 import { FormField } from "@/components/auth/form-field";
 import { FormStatusMessage } from "@/components/auth/form-status-message";
+import { SubmitButton } from "@/components/auth/submit-button";
 import { TurnstileField } from "@/components/auth/turnstile-field";
 import { useAuthForm } from "@/components/auth/use-auth-form";
-import { Button } from "@/components/ui/button";
 
 export function SignUpForm() {
   const { state, fieldErrors, handleSubmit, isPending, submissionCount } =
@@ -46,9 +46,9 @@ export function SignUpForm() {
       </p>
       <TurnstileField key={submissionCount} errors={fieldErrors.captchaToken} />
       <FormStatusMessage state={state} />
-      <Button type="submit" disabled={isPending}>
-        {isPending ? "Creando cuenta…" : "Crear cuenta"}
-      </Button>
+      <SubmitButton isPending={isPending} pendingLabel="Creando cuenta…">
+        Crear cuenta
+      </SubmitButton>
     </form>
   );
 }

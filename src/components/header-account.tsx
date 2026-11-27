@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { signOut } from "@/app/(auth)/actions";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Button } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/auth/session";
 
@@ -26,9 +27,7 @@ export async function HeaderAccount() {
         {currentUser.displayName}
       </span>
       <form action={signOut}>
-        <Button type="submit" variant="ghost" size="sm">
-          Cerrar sesión
-        </Button>
+        <SignOutButton />
       </form>
     </>
   );
