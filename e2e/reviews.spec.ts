@@ -62,16 +62,21 @@ function moderatorReview(page: Page) {
   return page.getByRole("article").filter({ hasText: moderatorReviewBody });
 }
 
-function moderatorThumbnail(page: Page) {
+function moderatorThumbnails(page: Page) {
   return moderatorReview(page)
     .getByRole("list", { name: `Fotos de la reseña de ${moderatorName}` })
     .getByRole("img");
 }
 
-async function moderatorPhotoUrlOnPlacePage(page: Page) {
-  const photoUrl = await moderatorThumbnail(page).getAttribute("src");
-  expect(photoUrl).toMatch(moderatorPhotoUrl);
-  return photoUrl ?? "";
+async function moderatorPhotoUrls(page: Page) {
+  await expect(moderatorThumbnails(page).first()).toBeVisible();
+  const photoUrls = await moderatorThumbnails(page).evaluateAll((images) =>
+    images.map((image) => image.getAttribute("src") ?? ""),
+  );
+  for (const photoUrl of photoUrls) {
+    expect(photoUrl).toMatch(moderatorPhotoUrl);
+  }
+  return photoUrls;
 }
 
 async function expectPhotoRemovedFromBucket(page: Page, photoUrl: string) {
@@ -201,8 +206,8 @@ test.describe("reviews", () => {
     await page.getByRole("button", { name: "Publicar reseña" }).click();
 
     await expect(page).toHaveURL(placePath);
-    await expect(moderatorThumbnail(page)).toHaveCount(1);
-    await moderatorPhotoUrlOnPlacePage(page);
+    await expect(moderatorThumbnails(page)).toHaveCount(1);
+    await moderatorPhotoUrls(page);
     const thumbnailLabel = `Foto 1 de la reseña de ${moderatorName}`;
     await page.getByRole("button", { name: thumbnailLabel }).click();
     await expect(
@@ -219,7 +224,7 @@ test.describe("reviews", () => {
     page,
   }) => {
     await signIn(page, moderatorEmail, placePath);
-    const removedPhotoUrl = await moderatorPhotoUrlOnPlacePage(page);
+    const [removedPhotoUrl] = await moderatorPhotoUrls(page);
 
     await page.getByRole("link", { name: "Editar tu reseña" }).click();
     await expect(page).toHaveURL(reviewPath);
@@ -237,13 +242,39 @@ test.describe("reviews", () => {
     await expect(
       moderatorReview(page).getByRole("img", { name: "1.0 de 5 estrellas" }),
     ).toBeVisible();
-    await expect(moderatorThumbnail(page)).toHaveCount(1);
-    expect(await moderatorPhotoUrlOnPlacePage(page)).not.toBe(removedPhotoUrl);
+    await expect(moderatorThumbnails(page)).toHaveCount(1);
+    expect(await moderatorPhotoUrls(page)).not.toContain(removedPhotoUrl);
     await expectPhotoRemovedFromBucket(page, removedPhotoUrl);
     await expectRatingSummary(page, {
       rating: "1.0",
       reviewCount: "2 reseñas",
     });
+  });
+
+  test("replacing one of three photos keeps three photos and removes the replaced file", async ({
+    page,
+  }) => {
+    await signIn(page, moderatorEmail, reviewPath);
+    await photoInput(page).setInputFiles(photoFixtureCopies(2));
+    await expect(page.getByAltText("Foto 3 de tu reseña")).toBeVisible();
+    await page.getByRole("button", { name: "Guardar cambios" }).click();
+    await expect(page).toHaveURL(placePath);
+    await expect(moderatorThumbnails(page)).toHaveCount(3);
+
+    await page.goto(reviewPath);
+    const replacedPhotoUrl =
+      (await page.getByAltText("Foto 1 de tu reseña").getAttribute("src")) ??
+      "";
+    expect(replacedPhotoUrl).toMatch(moderatorPhotoUrl);
+    await page.getByRole("button", { name: "Quitar foto 1" }).click();
+    await photoInput(page).setInputFiles(photoFixture);
+    await expect(page.getByAltText("Foto 3 de tu reseña")).toBeVisible();
+    await page.getByRole("button", { name: "Guardar cambios" }).click();
+
+    await expect(page).toHaveURL(placePath);
+    await expect(moderatorThumbnails(page)).toHaveCount(3);
+    expect(await moderatorPhotoUrls(page)).not.toContain(replacedPhotoUrl);
+    await expectPhotoRemovedFromBucket(page, replacedPhotoUrl);
   });
 
   test("the form rejects a missing rating, an empty text, a fourth photo and a file that is not an image", async ({
@@ -292,7 +323,7 @@ test.describe("reviews", () => {
     page,
   }) => {
     await signIn(page, moderatorEmail, placePath);
-    const photoUrl = await moderatorPhotoUrlOnPlacePage(page);
+    const photoUrls = await moderatorPhotoUrls(page);
 
     await page.getByRole("button", { name: "Borrar tu reseña" }).click();
     const deleteDialog = page.getByRole("alertdialog", {
@@ -307,7 +338,9 @@ test.describe("reviews", () => {
     await expect(
       page.getByRole("link", { name: "Escribir reseña" }),
     ).toBeVisible();
-    await expectPhotoRemovedFromBucket(page, photoUrl);
+    for (const photoUrl of photoUrls) {
+      await expectPhotoRemovedFromBucket(page, photoUrl);
+    }
     await expectRatingSummary(page, { rating: "1.0", reviewCount: "1 reseña" });
   });
 

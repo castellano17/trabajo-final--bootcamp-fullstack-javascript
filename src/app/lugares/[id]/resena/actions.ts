@@ -34,6 +34,8 @@ type DetectedPhoto = { bytes: Uint8Array; imageType: ImageType };
 
 type OwnReviewSummary = { id: string; photoIds: string[] };
 
+type PhotoChanges = { uploadedPaths: string[]; detachedPaths: string[] };
+
 type ReviewWriter = {
   supabase: SupabaseServerClient;
   userId: string;
@@ -114,55 +116,78 @@ async function readOwnReview({
     : null;
 }
 
-async function attachPhotos(
+async function uploadPhotoFiles(
   { supabase, userId }: ReviewWriter,
   reviewId: string,
   detectedPhotos: DetectedPhoto[],
-): Promise<FormState | null> {
-  if (detectedPhotos.length === 0) {
-    return null;
-  }
-
-  const bucket = supabase.storage.from(reviewPhotoBucket);
+): Promise<string[] | null> {
   const upload = await uploadReviewPhotos(
-    bucket,
+    supabase.storage.from(reviewPhotoBucket),
     detectedPhotos.map(({ bytes, imageType }) => ({
       path: `${userId}/${reviewId}/${crypto.randomUUID()}.${imageType.extension}`,
       bytes,
       contentType: imageType.contentType,
     })),
   );
-  if (!upload.uploaded) {
+  if (upload.uploaded) {
+    return upload.paths;
+  }
+  logger.warn("review.save_failed", {
+    userId,
+    reviewId,
+    reason: "photo_upload_failed",
+  });
+  return null;
+}
+
+async function removePhotoFiles(
+  { supabase, userId }: ReviewWriter,
+  reviewId: string,
+  storagePaths: string[],
+) {
+  const removalError = await removeReviewPhotoFiles(
+    supabase.storage.from(reviewPhotoBucket),
+    storagePaths,
+  );
+  if (removalError) {
     logger.warn("review.save_failed", {
       userId,
       reviewId,
-      reason: "photo_upload_failed",
+      reason: "photo_delete_failed",
     });
-    return saveFailedState;
+  }
+}
+
+async function insertPhotoRows(
+  { supabase, userId }: ReviewWriter,
+  reviewId: string,
+  storagePaths: string[],
+): Promise<FormState | null> {
+  if (storagePaths.length === 0) {
+    return null;
   }
 
   const { error } = await supabase
     .from("review_photos")
     .insert(
-      upload.paths.map((path) => ({ review_id: reviewId, storage_path: path })),
+      storagePaths.map((path) => ({ review_id: reviewId, storage_path: path })),
     );
-  if (error) {
-    await removeReviewPhotoFiles(bucket, upload.paths);
-    logger.warn("review.save_failed", { userId, reviewId, reason: error.code });
-    return error.code === checkViolationCode
-      ? fieldErrorState("photos", tooManyPhotosMessage)
-      : saveFailedState;
+  if (!error) {
+    return null;
   }
-  return null;
+  logger.warn("review.save_failed", { userId, reviewId, reason: error.code });
+  return error.code === checkViolationCode
+    ? fieldErrorState("photos", tooManyPhotosMessage)
+    : saveFailedState;
 }
 
-async function detachPhotos(
+async function detachPhotoRows(
   { supabase, userId }: ReviewWriter,
   reviewId: string,
   removedPhotoIds: string[],
-): Promise<FormState | null> {
+): Promise<string[] | null> {
   if (removedPhotoIds.length === 0) {
-    return null;
+    return [];
   }
 
   const { data, error } = await supabase
@@ -173,21 +198,25 @@ async function detachPhotos(
     .select("storage_path");
   if (error) {
     logger.warn("review.save_failed", { userId, reviewId, reason: error.code });
-    return saveFailedState;
+    return null;
   }
+  return data.map((photo) => photo.storage_path);
+}
 
-  const removalError = await removeReviewPhotoFiles(
-    supabase.storage.from(reviewPhotoBucket),
-    data.map((photo) => photo.storage_path),
-  );
-  if (removalError) {
-    logger.warn("review.save_failed", {
-      userId,
-      reviewId,
-      reason: "photo_delete_failed",
-    });
+async function revertPhotoChanges(
+  writer: ReviewWriter,
+  reviewId: string,
+  { uploadedPaths, detachedPaths }: PhotoChanges,
+) {
+  if (uploadedPaths.length > 0) {
+    await writer.supabase
+      .from("review_photos")
+      .delete()
+      .eq("review_id", reviewId)
+      .in("storage_path", uploadedPaths);
   }
-  return null;
+  await removePhotoFiles(writer, reviewId, uploadedPaths);
+  await insertPhotoRows(writer, reviewId, detachedPaths);
 }
 
 async function createReview(
@@ -208,8 +237,12 @@ async function createReview(
       : saveFailedState;
   }
 
-  const photoError = await attachPhotos(writer, data.id, detectedPhotos);
+  const uploadedPaths = await uploadPhotoFiles(writer, data.id, detectedPhotos);
+  const photoError = uploadedPaths
+    ? await insertPhotoRows(writer, data.id, uploadedPaths)
+    : saveFailedState;
   if (photoError) {
+    await removePhotoFiles(writer, data.id, uploadedPaths ?? []);
     await supabase.from("reviews").delete().eq("id", data.id);
     return photoError;
   }
@@ -225,8 +258,29 @@ async function updateReview(
   detectedPhotos: DetectedPhoto[],
 ): Promise<FormState | null> {
   const { supabase, userId, placeId } = writer;
-  const photoError = await attachPhotos(writer, reviewId, detectedPhotos);
+  const uploadedPaths = await uploadPhotoFiles(
+    writer,
+    reviewId,
+    detectedPhotos,
+  );
+  if (!uploadedPaths) {
+    return saveFailedState;
+  }
+
+  const detachedPaths = await detachPhotoRows(
+    writer,
+    reviewId,
+    removedPhotoIds,
+  );
+  if (!detachedPaths) {
+    await removePhotoFiles(writer, reviewId, uploadedPaths);
+    return saveFailedState;
+  }
+
+  const photoChanges = { uploadedPaths, detachedPaths };
+  const photoError = await insertPhotoRows(writer, reviewId, uploadedPaths);
   if (photoError) {
+    await revertPhotoChanges(writer, reviewId, photoChanges);
     return photoError;
   }
 
@@ -236,14 +290,11 @@ async function updateReview(
     .eq("id", reviewId);
   if (error) {
     logger.warn("review.save_failed", { userId, reviewId, reason: error.code });
+    await revertPhotoChanges(writer, reviewId, photoChanges);
     return saveFailedState;
   }
 
-  const removalError = await detachPhotos(writer, reviewId, removedPhotoIds);
-  if (removalError) {
-    return removalError;
-  }
-
+  await removePhotoFiles(writer, reviewId, detachedPaths);
   logger.info("review.updated", { userId, placeId, reviewId });
   return null;
 }
