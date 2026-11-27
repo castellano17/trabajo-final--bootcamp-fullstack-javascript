@@ -1,6 +1,7 @@
 import { cache } from "react";
 
-import { avatarPublicUrl } from "@/lib/profile/avatar-url";
+import { publicStorageUrl } from "@/lib/images/public-url";
+import { avatarBucket } from "@/lib/profile/avatar-config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
 
@@ -31,7 +32,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   return {
     id: userId,
     displayName: profile.display_name,
-    avatarUrl: avatarPublicUrl(supabase, profile.avatar_url),
+    avatarUrl: publicStorageUrl(supabase, avatarBucket, profile.avatar_url),
     role: profile.role,
   };
 });

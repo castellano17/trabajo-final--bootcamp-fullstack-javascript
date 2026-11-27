@@ -2,7 +2,11 @@ import { Star } from "lucide-react";
 
 import { RatingStars } from "@/components/places/rating-stars";
 import { Progress } from "@/components/ui/progress";
-import { formatRating, formatReviewCount } from "@/lib/places/format";
+import {
+  formatRating,
+  formatReviewCount,
+  formatStarCount,
+} from "@/lib/places/format";
 import type { RatingDistributionRow } from "@/lib/places/rating-distribution";
 
 type RatingSummaryProps = {
@@ -10,10 +14,6 @@ type RatingSummaryProps = {
   reviewCount: number;
   distribution: RatingDistributionRow[];
 };
-
-function starCountLabel(rating: number) {
-  return rating === 1 ? "1 estrella" : `${rating} estrellas`;
-}
 
 export function RatingSummary({
   averageRating,
@@ -51,7 +51,7 @@ export function RatingSummary({
             </span>
             <Progress
               value={row.percentage}
-              aria-label={starCountLabel(row.rating)}
+              aria-label={formatStarCount(row.rating)}
               className="h-2 [&_[data-slot=progress-indicator]]:bg-rating"
             />
             <span className="text-right text-muted-foreground tabular-nums">

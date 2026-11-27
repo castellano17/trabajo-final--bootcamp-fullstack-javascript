@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { pageAlert, submitSignIn } from "./support/auth";
 import { readCspViolations, trackCspViolations } from "./support/csp";
+import { uniquePlaceName } from "./support/places";
 
 const seedPassword = "password123";
 const tacosElGueroPath = "/lugares/b0000000-0000-0000-0000-000000000001";
@@ -24,11 +25,7 @@ async function placeNames(page: Page) {
 function placeManagementControls(page: Page) {
   return page
     .getByRole("link", { name: /^(Nuevo lugar|Editar)$/ })
-    .or(page.getByRole("button", { name: "Borrar" }));
-}
-
-function uniquePlaceName() {
-  return `Zz Prueba ${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    .or(page.getByRole("button", { name: "Borrar", exact: true }));
 }
 
 test.describe("places listing", () => {

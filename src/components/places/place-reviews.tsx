@@ -1,5 +1,6 @@
 import { RatingStars } from "@/components/places/rating-stars";
 import { RatingSummary } from "@/components/places/rating-summary";
+import { ReviewPhotos } from "@/components/reviews/review-photos";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { formatReviewDate } from "@/lib/places/format";
@@ -18,6 +19,10 @@ function ReviewItem({ review }: { review: PlaceReview }) {
   return (
     <article className="overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10">
       <p className="p-5 leading-relaxed">{review.body}</p>
+      <ReviewPhotos
+        photos={review.photos}
+        authorName={review.author.displayName}
+      />
       <footer className="flex items-center justify-between gap-3 border-t bg-muted/50 px-5 py-3 max-sm:flex-col max-sm:items-start">
         <div className="flex items-center gap-3">
           <UserAvatar
