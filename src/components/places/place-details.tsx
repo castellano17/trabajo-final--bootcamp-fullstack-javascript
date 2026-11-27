@@ -1,9 +1,10 @@
-import { MapPin } from "lucide-react";
+import { ExternalLink, MapPin } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { placeCategoryLabels } from "@/lib/places/categories";
 import { categoryAppearance } from "@/lib/places/category-appearance";
+import { googleMapsUrl } from "@/lib/places/paths";
 import type { PlaceDetail } from "@/lib/places/queries";
 
 type PlaceDetailsProps = {
@@ -41,10 +42,25 @@ export function PlaceDetails({ place, adminActions }: PlaceDetailsProps) {
         </div>
         {adminActions}
       </div>
-      <p className="flex items-start gap-2 text-muted-foreground">
+      <a
+        href={googleMapsUrl({
+          mapsUrl: place.maps_url,
+          address: place.address,
+        })}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex w-fit items-start gap-2 rounded-sm text-muted-foreground underline-offset-4 transition-colors outline-none hover:text-foreground hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+      >
         <MapPin aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-        {place.address}
-      </p>
+        <span>
+          {place.address}
+          <span className="sr-only">
+            {" "}
+            (abre Google Maps en una pestaña nueva)
+          </span>
+        </span>
+        <ExternalLink aria-hidden="true" className="mt-1 size-3.5 shrink-0" />
+      </a>
       {place.description && (
         <p className="max-w-prose leading-relaxed">{place.description}</p>
       )}

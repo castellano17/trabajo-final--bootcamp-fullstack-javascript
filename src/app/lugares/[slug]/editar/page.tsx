@@ -30,6 +30,7 @@ export default async function EditPlacePage({
               category: place.category,
               address: place.address,
               description: place.description,
+              mapsUrl: place.maps_url,
             }}
           />
         </CardContent>

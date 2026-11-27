@@ -18,12 +18,14 @@ import {
   placeCategories,
   placeCategoryLabels,
 } from "@/lib/places/categories";
+import { mapsUrlMaxLength } from "@/lib/places/config";
 
 type PlaceFormValues = {
   name: string;
   category: PlaceCategory;
   address: string;
   description: string;
+  mapsUrl: string | null;
 };
 
 type PlaceFormProps = {
@@ -71,6 +73,16 @@ export function PlaceForm({ action, submitLabel, place }: PlaceFormProps) {
         defaultValue={place?.address}
         required
         errors={fieldErrors.address}
+      />
+      <FormField
+        name="mapsUrl"
+        label="Enlace de Google Maps (opcional)"
+        type="url"
+        inputMode="url"
+        maxLength={mapsUrlMaxLength}
+        placeholder="https://maps.app.goo.gl/…"
+        defaultValue={place?.mapsUrl ?? ""}
+        errors={fieldErrors.mapsUrl}
       />
       <Field label="Descripción" errors={fieldErrors.description}>
         {(controlProps) => (

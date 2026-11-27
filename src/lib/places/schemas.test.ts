@@ -12,6 +12,7 @@ const validPlace = {
   category: "pastor",
   address: "  Av. Insurgentes Sur 1234  ",
   description: "  Pastor al trompo.  ",
+  mapsUrl: "",
 };
 
 function failedFieldsOf(result: {
@@ -28,6 +29,7 @@ describe("placeFormSchema", () => {
       category: "pastor",
       address: "Av. Insurgentes Sur 1234",
       description: "Pastor al trompo.",
+      mapsUrl: null,
     });
     expect(placeFormSchema.parse({ ...validPlace, description: "" })).toEqual(
       expect.objectContaining({ description: "" }),
@@ -38,6 +40,7 @@ describe("placeFormSchema", () => {
       category: "sushi",
       address: "",
       description: "a".repeat(1001),
+      mapsUrl: "",
     });
 
     expect(failedFieldsOf(invalidResult).sort()).toEqual([
@@ -46,6 +49,45 @@ describe("placeFormSchema", () => {
       "description",
       "name",
     ]);
+  });
+});
+
+describe("placeFormSchema mapsUrl", () => {
+  it("keeps an empty Google Maps link as no link", () => {
+    expect(
+      placeFormSchema.parse({ ...validPlace, mapsUrl: "   " }).mapsUrl,
+    ).toBeNull();
+  });
+
+  it("accepts https links from the five Google Maps prefixes", () => {
+    for (const mapsUrl of [
+      "https://maps.app.goo.gl/AbCdEf123",
+      "https://goo.gl/maps/AbCdEf123",
+      "https://google.com/maps/place/Tacos",
+      "https://www.google.com/maps/@19.43,-99.13,17z",
+      "https://maps.google.com/?q=19.43,-99.13",
+    ]) {
+      expect(placeFormSchema.parse({ ...validPlace, mapsUrl }).mapsUrl).toBe(
+        mapsUrl,
+      );
+    }
+  });
+
+  it("rejects a link without https, from another site or too long, with the message to paste a Google Maps link", () => {
+    for (const mapsUrl of [
+      "http://maps.google.com/?q=tacos",
+      "https://otro-sitio.com/maps",
+      "https://maps.google.com.otro-sitio.com/",
+      `https://maps.app.goo.gl/${"a".repeat(500)}`,
+    ]) {
+      const result = placeFormSchema.safeParse({ ...validPlace, mapsUrl });
+      expect(result.error?.issues).toEqual([
+        expect.objectContaining({
+          path: ["mapsUrl"],
+          message: "Pega un enlace de Google Maps.",
+        }),
+      ]);
+    }
   });
 });
 

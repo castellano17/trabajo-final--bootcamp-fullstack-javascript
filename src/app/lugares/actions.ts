@@ -11,7 +11,11 @@ import {
 } from "@/lib/forms/form-state";
 import { logger } from "@/lib/logger";
 import { placePath } from "@/lib/places/paths";
-import { placeFormSchema, placeIdSchema } from "@/lib/places/schemas";
+import {
+  type PlaceForm,
+  placeFormSchema,
+  placeIdSchema,
+} from "@/lib/places/schemas";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const notAllowedState: FormState = {
@@ -35,7 +39,12 @@ function parsePlaceForm(formData: FormData) {
     category: readFormField(formData, "category"),
     address: readFormField(formData, "address"),
     description: readFormField(formData, "description"),
+    mapsUrl: readFormField(formData, "mapsUrl"),
   });
+}
+
+function toPlaceRow({ mapsUrl, ...place }: PlaceForm) {
+  return { ...place, maps_url: mapsUrl };
 }
 
 export async function createPlace(
@@ -55,7 +64,7 @@ export async function createPlace(
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("places")
-    .insert(parsed.data)
+    .insert(toPlaceRow(parsed.data))
     .select("id, slug")
     .single();
   if (error) {
@@ -86,7 +95,7 @@ export async function updatePlace(
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("places")
-    .update(parsed.data)
+    .update(toPlaceRow(parsed.data))
     .eq("id", placeId)
     .select("slug")
     .single();

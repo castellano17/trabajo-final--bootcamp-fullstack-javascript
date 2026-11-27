@@ -79,7 +79,7 @@ export const getPlaceBySlug = cache(async (slug: string) => {
   const { data, error } = await supabase
     .from("places")
     .select(
-      "id, slug, name, category, description, address, average_rating, review_count",
+      "id, slug, name, category, description, address, maps_url, average_rating, review_count",
     )
     .eq("slug", slug)
     .maybeSingle();

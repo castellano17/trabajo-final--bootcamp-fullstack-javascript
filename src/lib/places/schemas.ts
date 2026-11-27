@@ -1,7 +1,17 @@
 import { z } from "zod";
 
 import { placeCategories } from "@/lib/places/categories";
-import { placeSearchMaxLength } from "@/lib/places/config";
+import {
+  googleMapsUrlPrefixes,
+  mapsUrlMaxLength,
+  placeSearchMaxLength,
+} from "@/lib/places/config";
+
+const invalidMapsUrlMessage = "Pega un enlace de Google Maps.";
+
+function isGoogleMapsUrl(url: string): boolean {
+  return googleMapsUrlPrefixes.some((prefix) => url.startsWith(prefix));
+}
 
 function firstValueOf(value: unknown) {
   return Array.isArray(value) ? value[0] : value;
@@ -23,7 +33,15 @@ export const placeFormSchema = z.object({
     .string()
     .trim()
     .max(1000, "La descripción no puede superar los 1000 caracteres."),
+  mapsUrl: z
+    .string()
+    .trim()
+    .max(mapsUrlMaxLength, invalidMapsUrlMessage)
+    .refine((url) => url === "" || isGoogleMapsUrl(url), invalidMapsUrlMessage)
+    .transform((url) => url || null),
 });
+
+export type PlaceForm = z.infer<typeof placeFormSchema>;
 
 export const placeIdSchema = z.guid();
 
